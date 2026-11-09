@@ -12,8 +12,8 @@ Sistema web de préstamos de biblioteca para un centro de formación.
 
 | Vista | Para qué sirve |
 | --- | --- |
-| Backlog | Tabla con todo el Product Backlog: prioridad, estimación y sprint |
-| Board | Tablero Kanban: Backlog → Ready → In progress → In review → Done |
+| Backlog | Tabla con todo el Product Backlog agrupado por sprint, con prioridad y estimación |
+| Board | Tablero Kanban: Todo → In progress → In review → Done |
 | Current iteration | Solo el sprint en curso |
 | Roadmap | Línea de tiempo con los tres sprints |
 

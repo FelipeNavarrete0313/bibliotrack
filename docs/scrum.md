@@ -22,18 +22,19 @@
 
 | Ceremonia | Cuándo | Qué se hace en GitHub |
 | --- | --- | --- |
-| Sprint Planning | Primer lunes del sprint | Se eligen issues del backlog, se les asigna el hito y la iteración del sprint, y pasan a **Ready** |
+| Sprint Planning | Primer lunes del sprint | Se eligen issues del backlog, se les asigna el hito y la iteración del sprint, y quedan en **Todo** |
 | Daily | Todos los días, 15 minutos | Se revisa la vista **Board**; cada persona mueve sus tarjetas |
 | Sprint Review | Último viernes del sprint | Se muestran los issues en **Done** y el Product Owner los acepta |
 | Retrospectiva | Después de la Review | Se registra en `docs/sprints/` qué salió bien, qué mejorar y las acciones |
 
 ## Flujo de un issue
 
-1. **Backlog**: el issue existe pero todavía no está listo para trabajarse.
-2. **Ready**: tiene criterios de aceptación, estimación y sprint.
-3. **In progress**: alguien lo tomó y creó una rama (`feature/HU-09-registrar-prestamo`).
-4. **In review**: hay un pull request abierto que dice `Closes #11`.
-5. **Done**: el pull request se fusionó. GitHub cierra el issue y el Project lo mueve a Done automáticamente.
+1. **Todo**: el issue tiene criterios de aceptación, estimación y sprint, pero nadie lo ha empezado.
+2. **In progress**: alguien lo tomó y creó una rama (`feature/HU-09-registrar-prestamo`).
+3. **In review**: hay un pull request abierto que dice `Closes #11`. El Project cambia el estado solo.
+4. **Done**: el pull request se fusionó. GitHub cierra el issue y el Project lo mueve a Done automáticamente.
+
+La columna **In progress** tiene un límite de 5 tarjetas (límite WIP) para no empezar más trabajo del que se puede terminar.
 
 ## Estimación
 

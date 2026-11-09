@@ -2,7 +2,7 @@
 
 ## 1. Toma un issue
 
-- Elige un issue en **Ready** del sprint actual en el tablero del Project.
+- Elige un issue en **Todo** del sprint actual en el tablero del Project.
 - Asígnatelo y muévelo a **In progress**.
 
 ## 2. Crea una rama
@@ -34,7 +34,7 @@ docs: actualizar el backlog
 ## 4. Abre un pull request
 
 - Usa la plantilla y escribe `Closes #<número del issue>` para enlazarlo.
-- Mueve el issue a **In review**.
+- El Project mueve el issue a **In review** automáticamente al enlazar el pull request.
 - El CI debe pasar y un compañero debe aprobar.
 
 ## 5. Fusiona
