@@ -1,0 +1,24 @@
+name: Tarea técnica
+description: Trabajo técnico que no es visible directamente para el usuario
+title: "[T-XX] "
+labels: ["tipo: tarea"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: Qué hay que hacer y por qué.
+    validations:
+      required: true
+  - type: textarea
+    id: lista
+    attributes:
+      label: Lista de trabajo
+      value: |
+        - [ ] Paso 1
+        - [ ] Paso 2
+  - type: dropdown
+    id: estimacion
+    attributes:
+      label: Estimación (puntos de historia)
+      options: ["1", "2", "3", "5", "8"]
