@@ -1,0 +1,34 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Préstamos{% endblock %}
+{% block contenido %}
+<h1>Préstamos</h1>
+<div class="dos-columnas">
+  <form class="tarjeta" method="post" action="{% url 'prestamos' %}">
+    {% csrf_token %}
+    <h2 style="margin-top:0">Registrar un préstamo</h2>
+    {% for campo in form %}
+    <div class="form-fila">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {{ campo.errors }}
+    </div>
+    {% endfor %}
+    <button type="submit">Registrar préstamo</button>
+    <p class="vacio">La fecha de devolución se calcula sola: 15 días (si cae domingo, pasa al lunes). Máximo 3 préstamos activos por lector.</p>
+  </form>
+
+  <div>
+    <h2 style="margin-top:0">Préstamos activos</h2>
+    {% if activos %}
+    <table>
+      <tr><th>Libro</th><th>Lector</th><th>Devolver el</th></tr>
+      {% for p in activos %}
+      <tr><td>{{ p.libro.titulo }}</td><td>{{ p.lector.nombre }}</td><td>{{ p.fecha_devolucion|date:"d/m/Y" }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="vacio">Todavía no hay préstamos activos.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

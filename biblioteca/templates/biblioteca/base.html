@@ -1,0 +1,30 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}BiblioTrack{% endblock %} · BiblioTrack</title>
+  <link rel="stylesheet" href="{% static 'biblioteca/estilos.css' %}">
+</head>
+<body>
+  <header>
+    <div class="contenedor">
+      <a class="marca" href="{% url 'catalogo' %}">BiblioTrack</a>
+      <nav>
+        <a href="{% url 'catalogo' %}" {% if request.resolver_match.url_name == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
+        <a href="{% url 'prestamos' %}" {% if request.resolver_match.url_name == 'prestamos' %}class="activo"{% endif %}>Préstamos</a>
+        <a href="{% url 'admin:index' %}">Administración</a>
+      </nav>
+    </div>
+  </header>
+  <main class="contenedor">
+    {% if messages %}
+      <ul class="mensajes">
+        {% for mensaje in messages %}<li class="{{ mensaje.tags }}">{{ mensaje }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+  <p class="pie">BiblioTrack · proyecto académico de ejemplo · SENA</p>
+</body>
+</html>

@@ -35,6 +35,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios de acepta
 | HU-11 | [Consultar mis préstamos y fechas de devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/13) | Historia de usuario | E3 | Alta | 3 | Sprint 2 |
 | HU-08 | [Editar o dar de baja un libro](https://github.com/FelipeNavarrete0313/bibliotrack/issues/14) | Historia de usuario | E2 | Media | 3 | Sprint 2 |
 | T-05 | [Desplegar la aplicación en un ambiente de pruebas](https://github.com/FelipeNavarrete0313/bibliotrack/issues/15) | Tarea técnica | E3 | Media | 3 | Sprint 2 |
+| T-07 | [Construir la interfaz web con Django](https://github.com/FelipeNavarrete0313/bibliotrack/issues/29) | Tarea técnica | E2 | Alta | 5 | Sprint 2 |
 | BUG-01 | [La búsqueda no encuentra libros cuando el título tiene tilde](https://github.com/FelipeNavarrete0313/bibliotrack/issues/16) | Bug | E2 | Alta | 2 | Sprint 2 |
 | HU-03 | [Recuperar la contraseña](https://github.com/FelipeNavarrete0313/bibliotrack/issues/17) | Historia de usuario | E1 | Media | 3 | Sprint 3 |
 | HU-04 | [Administrar los roles de los usuarios](https://github.com/FelipeNavarrete0313/bibliotrack/issues/18) | Historia de usuario | E1 | Media | 5 | Sprint 3 |
@@ -51,6 +52,6 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios de acepta
 | Sprint | Fechas | Puntos planeados | Objetivo |
 | --- | --- | --- | --- |
 | Sprint 1 | 19 oct – 1 nov | 25 | Un lector puede registrarse, iniciar sesión y consultar el catálogo |
-| Sprint 2 | 2 nov – 15 nov | 19 | El bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
+| Sprint 2 | 2 nov – 15 nov | 24 | El bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
 | Sprint 3 | 16 nov – 29 nov | 26 | Reservas, renovaciones, notificaciones y administración de roles |
 | Sin asignar | — | 10 | Reportes y multas, si queda capacidad |
