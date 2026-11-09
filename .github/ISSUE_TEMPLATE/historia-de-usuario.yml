@@ -1,0 +1,42 @@
+name: Historia de usuario
+description: Una funcionalidad descrita desde el punto de vista del usuario
+title: "[HU-XX] "
+labels: ["tipo: historia de usuario"]
+body:
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia de usuario
+      description: Usa el formato Como / quiero / para.
+      value: "**Como** [tipo de usuario], **quiero** [funcionalidad], **para** [beneficio esperado]."
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Condiciones que se pueden comprobar para dar la historia por terminada.
+      value: |
+        - [ ] Criterio 1
+        - [ ] Criterio 2
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad
+      options: [Alta, Media, Baja]
+    validations:
+      required: true
+  - type: dropdown
+    id: estimacion
+    attributes:
+      label: Estimación (puntos de historia)
+      options: ["1", "2", "3", "5", "8"]
+    validations:
+      required: true
+  - type: input
+    id: sprint
+    attributes:
+      label: Sprint previsto
+      placeholder: "Sprint 2, o «sin asignar»"
