@@ -18,13 +18,30 @@
   </form>
   <div>
     <h2 style="margin-top:0">Préstamos activos</h2>
+    <form class="buscador-pequeno" method="get" action="{% url 'prestamos' %}">
+      <input type="search" name="buscar" value="{{ buscar_prestamo }}" placeholder="Documento del lector o ISBN" aria-label="Buscar préstamo por documento o ISBN">
+      <button type="submit">Buscar</button>
+      {% if buscar_prestamo %}<a class="boton boton-secundario" href="{% url 'prestamos' %}">Ver todos</a>{% endif %}
+    </form>
     {% if activos %}
     <table>
-      <tr><th>Libro</th><th>Lector</th><th>Devolver el</th></tr>
+      <tr><th>Libro</th><th>Lector</th><th>Devolver el</th><th></th></tr>
       {% for p in activos %}
-      <tr><td>{{ p.libro.titulo }}</td><td>{{ p.lector.nombre }}</td><td>{{ p.fecha_devolucion|date:"d/m/Y" }}</td></tr>
+      <tr>
+        <td>{{ p.libro.titulo }}<br><span class="ayuda">ISBN {{ p.libro.isbn }}</span></td>
+        <td>{{ p.lector.nombre }}<br><span class="ayuda">Doc. {{ p.lector.documento }}</span></td>
+        <td>{{ p.fecha_devolucion|date:"d/m/Y" }}{% if p.fecha_devolucion < hoy %}<br><span class="vencido">Vencido</span>{% endif %}</td>
+        <td>
+          <form method="post" action="{% url 'registrar_devolucion' p.pk %}">
+            {% csrf_token %}
+            <button type="submit">Registrar devolución</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
     </table>
+    {% elif buscar_prestamo %}
+    <p class="vacio">No hay préstamos activos con el documento o ISBN «{{ buscar_prestamo }}».</p>
     {% else %}
     <p class="vacio">Todavía no hay préstamos activos.</p>
     {% endif %}

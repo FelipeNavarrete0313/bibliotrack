@@ -7,7 +7,7 @@
 <div class="opciones">
   <a href="{% url 'catalogo' %}"><div class="tarjeta"><h2>Buscar libros</h2><p class="ayuda">Busca por título, autor o categoría y mira cuántos ejemplares hay.</p></div></a>
   {% if perfil.es_personal %}
-  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Registrar un préstamo</h2><p class="ayuda">Presta un libro con el documento del lector y mira los préstamos activos.</p></div></a>
+  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Préstamos y devoluciones</h2><p class="ayuda">Presta un libro con el documento del lector, registra devoluciones y mira los préstamos activos.</p></div></a>
   <a href="{% url 'registrar_libro' %}"><div class="tarjeta"><h2>Registrar un libro</h2><p class="ayuda">Agrega un título nuevo al catálogo con sus ejemplares.</p></div></a>
   {% endif %}
 </div>
