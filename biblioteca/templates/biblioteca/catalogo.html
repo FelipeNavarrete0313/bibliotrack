@@ -1,0 +1,32 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Catálogo{% endblock %}
+{% block contenido %}
+<h1>Catálogo de libros</h1>
+
+<form class="buscador" method="get" action="{% url 'catalogo' %}" role="search">
+  <input type="search" name="q" value="{{ texto }}" placeholder="Busca por título o autor" aria-label="Buscar por título o autor">
+  <select name="categoria" aria-label="Categoría">
+    <option value="">Todas las categorías</option>
+    {% for c in categorias %}<option value="{{ c }}" {% if c == categoria %}selected{% endif %}>{{ c }}</option>{% endfor %}
+  </select>
+  <button type="submit">Buscar</button>
+</form>
+
+{% if resultados %}
+<table>
+  <tr><th>Título</th><th>Autor</th><th>Categoría</th><th>Disponibilidad</th></tr>
+  {% for libro in resultados %}
+  <tr>
+    <td>{{ libro.titulo }}</td>
+    <td>{{ libro.autor }}</td>
+    <td>{{ libro.categoria }}</td>
+    <td>{% if libro.disponibles %}<span class="disponible">{{ libro.disponibles }} disponible{{ libro.disponibles|pluralize }}</span>{% else %}<span class="agotado">Agotado</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% elif hubo_busqueda %}
+<p class="vacio">No encontramos libros con «{{ texto }}». Prueba con otra palabra o con otra categoría.</p>
+{% else %}
+<p class="vacio">El catálogo está vacío. Carga los datos de prueba con <code>py manage.py cargar_datos</code>.</p>
+{% endif %}
+{% endblock %}
