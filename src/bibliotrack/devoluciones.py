@@ -1,4 +1,4 @@
-"""Devoluciones: reglas para registrar una devolución (HU-10, en progreso)."""
+"""Devoluciones: reglas para registrar una devolución (HU-10)."""
 
 
 def dias_de_retraso(fecha_devolucion, fecha_entrega):
@@ -7,3 +7,9 @@ def dias_de_retraso(fecha_devolucion, fecha_entrega):
     Si el libro se entrega a tiempo o antes, el retraso es 0.
     """
     return max(0, (fecha_entrega - fecha_devolucion).days)
+
+
+def devolver_ejemplar(libro):
+    """Suma el ejemplar devuelto a los disponibles, sin pasar del total."""
+    libro["disponibles"] = min(libro["disponibles"] + 1, libro["total_ejemplares"])
+    return libro

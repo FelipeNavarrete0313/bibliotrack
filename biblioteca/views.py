@@ -2,10 +2,13 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from bibliotrack.catalogo import buscar
+from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
 
 from . import seguridad
@@ -83,8 +86,36 @@ def prestamos(request):
                 f"Debe devolverlo el {prestamo['fecha_devolucion']:%d/%m/%Y}.",
             )
             return redirect("prestamos")
+    buscar_prestamo = request.GET.get("buscar", "").strip()
     activos = Prestamo.objects.filter(estado=Prestamo.ACTIVO).select_related("lector__usuario", "libro")
-    return render(request, "biblioteca/prestamos.html", {"form": form, "activos": activos})
+    if buscar_prestamo:
+        activos = activos.filter(Q(lector__documento=buscar_prestamo) | Q(libro__isbn=buscar_prestamo))
+    return render(request, "biblioteca/prestamos.html", {
+        "form": form, "activos": activos, "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+    })
+
+
+@solo_personal
+@require_POST
+def registrar_devolucion(request, pk):
+    """HU-10: registrar la devolución de un préstamo activo (solo personal)."""
+    prestamo = get_object_or_404(Prestamo.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Prestamo.ACTIVO)
+    hoy = timezone.localdate()
+    libro = prestamo.libro
+    with transaction.atomic():
+        datos = devolver_ejemplar({"disponibles": libro.disponibles, "total_ejemplares": libro.total_ejemplares})
+        libro.disponibles = datos["disponibles"]
+        libro.save(update_fields=["disponibles"])
+        prestamo.estado = Prestamo.DEVUELTO
+        prestamo.fecha_entrega = hoy
+        prestamo.save(update_fields=["estado", "fecha_entrega"])
+    retraso = dias_de_retraso(prestamo.fecha_devolucion, hoy)
+    texto = f"Devolución registrada: «{libro.titulo}» de {prestamo.lector.nombre}."
+    if retraso:
+        messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.")
+    else:
+        messages.success(request, f"{texto} Se entregó a tiempo.")
+    return redirect("prestamos")
 
 
 def iniciar_sesion(request):
