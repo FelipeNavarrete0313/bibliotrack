@@ -80,6 +80,24 @@ def registrar_devolucion(prestamo, hoy=None):
     return dias_de_retraso(prestamo.fecha_devolucion, hoy)
 
 
+def dar_de_baja(libro):
+    """HU-08: saca el libro del catálogo y rechaza sus solicitudes pendientes.
+
+    Devuelve cuántas solicitudes se rechazaron.
+    """
+    rechazadas = 0
+    with transaction.atomic():
+        Libro.objects.filter(pk=libro.pk).update(activo=False)
+        for solicitud in libro.solicitudes.filter(estado=Solicitud.PENDIENTE):
+            try:
+                cerrar_solicitud(solicitud, Solicitud.RECHAZADA)
+                rechazadas += 1
+            except PrestamoNoPermitido:  # otra petición la atendió primero (BUG-05)
+                pass
+    libro.activo = False
+    return rechazadas
+
+
 def borrar_prestamo(prestamo):
     """Si se borra un préstamo activo (solo desde el Admin), el ejemplar vuelve al catálogo."""
     with transaction.atomic():

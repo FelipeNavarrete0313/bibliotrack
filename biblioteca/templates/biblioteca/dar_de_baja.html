@@ -8,6 +8,7 @@
   <p>No se puede dar de baja: tiene <b>{{ activos }} préstamo{{ activos|pluralize }} activo{{ activos|pluralize }}</b>. Espera a que se devuelva{{ activos|pluralize:"n" }}.</p>
   {% else %}
   <p>El libro dejará de aparecer en el catálogo y en las búsquedas. Su historial de préstamos se conserva.</p>
+  {% if pendientes %}<p class="aviso">Tiene <b>{{ pendientes }} solicitud{{ pendientes|pluralize:"es" }} pendiente{{ pendientes|pluralize }}</b>: se rechazará{{ pendientes|pluralize:"n" }} y el lector lo verá en «Mis préstamos».</p>{% endif %}
   <p><b>¿Seguro que quieres darlo de baja?</b></p>
   <form method="post" action="{% url 'dar_de_baja' libro.pk %}">
     {% csrf_token %}

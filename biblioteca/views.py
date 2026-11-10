@@ -85,15 +85,18 @@ def dar_de_baja(request, pk):
     """HU-08: dar de baja un libro, con confirmación y sin préstamos activos."""
     libro = get_object_or_404(Libro, pk=pk, activo=True)
     activos = libro.prestamos.filter(estado=Prestamo.ACTIVO).count()
+    pendientes = libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
     if request.method == "POST":
         if activos:
             messages.error(request, f"No se puede dar de baja: tiene {activos} préstamo(s) activo(s).")
             return redirect("detalle_libro", pk=libro.pk)
-        libro.activo = False
-        libro.save(update_fields=["activo"])
-        messages.success(request, f"«{libro.titulo}» se dio de baja. Su historial de préstamos se conserva.")
+        rechazadas = servicios.dar_de_baja(libro)
+        texto = f"«{libro.titulo}» se dio de baja. Su historial de préstamos se conserva."
+        if rechazadas:
+            texto += f" Se rechazó {rechazadas} solicitud pendiente." if rechazadas == 1 else f" Se rechazaron {rechazadas} solicitudes pendientes."
+        messages.success(request, texto)
         return redirect("catalogo")
-    return render(request, "biblioteca/dar_de_baja.html", {"libro": libro, "activos": activos})
+    return render(request, "biblioteca/dar_de_baja.html", {"libro": libro, "activos": activos, "pendientes": pendientes})
 
 
 @solo_personal

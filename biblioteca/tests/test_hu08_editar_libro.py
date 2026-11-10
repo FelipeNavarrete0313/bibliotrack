@@ -4,7 +4,7 @@ from datetime import date
 
 from django.urls import reverse
 
-from biblioteca.models import Libro, Prestamo
+from biblioteca.models import Libro, Prestamo, Solicitud
 
 
 def editar(client, libro, **cambios):
@@ -73,3 +73,27 @@ def test_un_lector_no_puede_editar_ni_dar_de_baja(client, lector, libro):
     assert client.get(reverse("editar_libro", args=[libro.pk])).status_code == 403
     assert client.post(reverse("dar_de_baja", args=[libro.pk])).status_code == 403
     assert Libro.objects.get(pk=libro.pk).activo
+
+
+def test_escenario_dar_de_baja_rechaza_las_solicitudes_pendientes(client, bibliotecario, lector, libro):
+    # Dado un libro con una solicitud pendiente, cuando la bibliotecaria lo da de baja,
+    # entonces la solicitud queda rechazada y se le avisa cuántas eran.
+    solicitud = Solicitud.objects.create(lector=lector, libro=libro)
+    client.force_login(bibliotecario.usuario)
+    aviso = client.get(reverse("dar_de_baja", args=[libro.pk])).content.decode()
+    assert "1 solicitud pendiente" in aviso
+    contenido = client.post(reverse("dar_de_baja", args=[libro.pk]), follow=True).content.decode()
+    assert "Se rechazó 1 solicitud pendiente." in contenido
+    solicitud.refresh_from_db()
+    assert solicitud.estado == Solicitud.RECHAZADA
+    assert not Solicitud.objects.filter(estado=Solicitud.PENDIENTE).exists()
+
+
+def test_mis_prestamos_no_enlaza_a_un_libro_dado_de_baja(client, bibliotecario, lector, libro):
+    Solicitud.objects.create(lector=lector, libro=libro)
+    client.force_login(bibliotecario.usuario)
+    client.post(reverse("dar_de_baja", args=[libro.pk]))
+    client.force_login(lector.usuario)
+    contenido = client.get(reverse("mis_prestamos")).content.decode()
+    assert "Clean Code" in contenido
+    assert reverse("detalle_libro", args=[libro.pk]) not in contenido
