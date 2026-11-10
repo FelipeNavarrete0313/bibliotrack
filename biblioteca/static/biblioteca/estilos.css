@@ -69,6 +69,7 @@ tr.fila-por-vencer td { background: #fdf3d7; }
 .solicitudes { margin-bottom: 28px; }
 .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
 .accion-lector { margin: 16px 0; }
+.accion-lector p { margin: 0; }
 .accion-lector form { margin: 0 0 8px; }
 .aviso { display: inline-block; margin: 8px 0 0; padding: 4px 10px; border-radius: 999px; background: #fdf3d7; color: #6b4600; font-weight: 600; }
 .estado-pendiente { color: var(--amarillo); font-weight: 600; }
