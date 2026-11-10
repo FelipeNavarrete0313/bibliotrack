@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   pruebas:
@@ -16,5 +15,9 @@ jobs:
           python-version: "3.12"
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
+      - name: Revisar la configuración de Django
+        run: python manage.py check
+      - name: Revisar que no falten migraciones
+        run: python manage.py makemigrations --check --dry-run
       - name: Ejecutar pruebas
         run: pytest
