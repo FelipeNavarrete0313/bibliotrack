@@ -11,6 +11,9 @@ erDiagram
     PERFIL ||--o{ RESERVA : "hace"
     LIBRO ||--o{ PRESTAMO : "se presta en"
     LIBRO ||--o{ RESERVA : "se reserva en"
+    PERFIL ||--o{ SOLICITUD : "solicita"
+    LIBRO ||--o{ SOLICITUD : "se solicita en"
+    SOLICITUD |o--o| PRESTAMO : "al entregarse crea"
 
     USUARIO {
         int id PK
@@ -54,6 +57,15 @@ erDiagram
         datetime creada
         string estado "activa, atendida o cancelada"
     }
+    SOLICITUD {
+        int id PK
+        int lector_id FK
+        int libro_id FK
+        datetime creada
+        string estado "pendiente, entregada, rechazada o cancelada"
+        datetime atendida "null mientras esté pendiente"
+        int prestamo_id FK "el préstamo creado al entregarla"
+    }
 ```
 
 ## Decisiones de diseño
@@ -66,6 +78,7 @@ erDiagram
 | `disponibles <= total_ejemplares` es una restricción de la base de datos | El error se detecta aunque alguien se salte la aplicación. |
 | Un libro dado de baja no se borra (`activo = false`) | HU-08 pide conservar su historial de préstamos. |
 | El préstamo guarda `fecha_devolucion` y `fecha_entrega` por separado | HU-10 necesita calcular los días de retraso. |
+| La `Solicitud` (HU-17) es una tabla aparte y no descuenta ejemplares | El lector pide el libro en línea, pero el ejemplar solo sale al entregarlo; ahí se crea el `Prestamo` con las reglas de HU-09. Se agregó en la migración `0002_solicitud`. |
 
 ## Script SQL
 
@@ -73,6 +86,7 @@ Django crea las tablas con migraciones (`biblioteca/migrations/`). El SQL equiva
 
 ```bash
 py manage.py sqlmigrate biblioteca 0001
+py manage.py sqlmigrate biblioteca 0002
 ```
 
 ## Datos de prueba
