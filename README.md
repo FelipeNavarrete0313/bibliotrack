@@ -27,10 +27,10 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 | --- | --- | --- |
 | Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 17 |
 | Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 8 |
-| Bugs | Issues con `tipo: bug` | 3 |
+| Bugs | Issues con `tipo: bug` | 4 |
 | Épicas | Etiquetas `épica: …` | 5 |
 | Sprints | Hitos (milestones) e iteraciones del Project | 3 |
-| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 93 puntos · 372 horas |
+| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 95 puntos · 380 horas |
 
 ## Documentación
 
@@ -91,6 +91,12 @@ La bibliotecaria también puede prestar directamente, sin solicitud, con el docu
 ### Panel interno de Django (opcional)
 
 Para revisar la base de datos crea un superusuario con `py manage.py createsuperuser` (escribe también el correo) y entra a `http://127.0.0.1:8000/admin/` escribiendo la dirección. El superusuario no tiene rol en BiblioTrack; para usarlo en las páginas de la aplicación, créale un Perfil desde el panel.
+
+El panel aplica las mismas reglas que las páginas (BUG-04):
+
+- En **Solicitudes**, grabar una solicitud como «Entregada» crea el préstamo y descuenta el ejemplar. También hay acciones para entregar o rechazar varias a la vez.
+- En **Préstamos**, grabar un préstamo como «Devuelto» (o usar la acción «Registrar la devolución») suma el ejemplar.
+- «Ejemplares disponibles» no se edita a mano: solo cambia con préstamos y devoluciones.
 
 ### Usuarios de prueba
 
