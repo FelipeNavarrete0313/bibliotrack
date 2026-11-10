@@ -35,6 +35,7 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 
 - [Product Backlog](docs/product-backlog.md)
 - [Modelo de datos](docs/modelo-datos.md)
+- [Prototipos de interfaz](docs/wireframes.md)
 - [Cómo trabajamos: Scrum en GitHub](docs/scrum.md)
 - [Definición de terminado](docs/definicion-de-terminado.md)
 - [Sprint 1: review y retrospectiva](docs/sprints/sprint-1.md)
