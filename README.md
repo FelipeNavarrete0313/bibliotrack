@@ -61,6 +61,8 @@ py manage.py runserver
 
 Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presiona `Ctrl + C` en la terminal.
 
+Para iniciar sesión usa uno de los usuarios de prueba de [`docs/modelo-datos.md`](docs/modelo-datos.md#datos-de-prueba), por ejemplo `ana@bibliotrack.test` (lector) o `sofia@bibliotrack.test` (bibliotecaria), con la contraseña `Biblio2026`.
+
 ## Ejecutar las pruebas
 
 ```bash
