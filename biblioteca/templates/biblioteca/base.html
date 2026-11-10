@@ -7,17 +7,27 @@
   <link rel="stylesheet" href="{% static 'biblioteca/estilos.css' %}">
 </head>
 <body>
+  {% with pagina=request.resolver_match.url_name perfil=user.perfil %}
   <header>
     <div class="contenedor">
-      <a class="marca" href="{% url 'catalogo' %}">BiblioTrack</a>
+      <a class="marca" href="{% if user.is_authenticated %}{% url 'inicio' %}{% else %}{% url 'catalogo' %}{% endif %}">BiblioTrack</a>
       <nav aria-label="Principal">
-        {% block menu %}
-        <a href="{% url 'catalogo' %}" {% if request.resolver_match.url_name == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
-        {% endblock %}
+        {% if user.is_authenticated %}
+        <a href="{% url 'inicio' %}" {% if pagina == 'inicio' %}class="activo"{% endif %}>Mi inicio</a>
+        {% endif %}
+        <a href="{% url 'catalogo' %}" {% if pagina == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
       </nav>
-      <div class="cuenta">{% block cuenta %}{% endblock %}</div>
+      <div class="cuenta">
+        {% if user.is_authenticated %}
+          <span>{{ user.get_full_name|default:user.email }}</span>
+          <form method="post" action="{% url 'cerrar_sesion' %}">{% csrf_token %}<button type="submit">Cerrar sesión</button></form>
+        {% else %}
+          <a href="{% url 'iniciar_sesion' %}" {% if pagina == 'iniciar_sesion' %}class="activo"{% endif %}>Iniciar sesión</a>
+        {% endif %}
+      </div>
     </div>
   </header>
+  {% endwith %}
   <main class="contenedor">
     {% if messages %}
       <ul class="mensajes">
