@@ -51,6 +51,16 @@ py manage.py cargar_datos    # 20 libros y 5 usuarios de prueba
 
 En Mac o Linux usa `python3` en lugar de `py`.
 
+## Ejecutar la aplicación
+
+Después de preparar la base de datos:
+
+```bash
+py manage.py runserver
+```
+
+Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presiona `Ctrl + C` en la terminal.
+
 ## Ejecutar las pruebas
 
 ```bash
@@ -62,7 +72,7 @@ py -m pytest -v
 ```
 manage.py          punto de entrada de Django
 config/            configuración de Django
-biblioteca/        app de Django: modelos, datos de prueba y sus pruebas
+biblioteca/        app de Django: modelos, vistas, plantillas, datos de prueba y sus pruebas
 src/bibliotrack/   reglas del negocio (búsqueda y préstamos), sin Django
 tests/             pruebas de las reglas del negocio
 docs/              backlog, Scrum y sprints
