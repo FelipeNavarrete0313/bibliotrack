@@ -20,6 +20,25 @@
     </dd>
   </dl>
 </div>
+{% if user.perfil.rol == 'lector' %}
+<div class="tarjeta accion-lector">
+  {% if prestado %}
+    <p>Tienes este libro prestado. Mira la fecha de devolución en <a href="{% url 'mis_prestamos' %}">Mis préstamos</a>.</p>
+  {% elif solicitud %}
+    <p>Ya solicitaste este libro el {{ solicitud.creada|date:"d/m/Y" }}. <b>Estado: pendiente</b>. Recógelo en el mostrador de la biblioteca.</p>
+  {% elif libro.disponibles %}
+    <form method="post" action="{% url 'solicitar_prestamo' libro.pk %}">
+      {% csrf_token %}
+      <button type="submit">Solicitar préstamo</button>
+    </form>
+    <p class="ayuda">La biblioteca prepara el libro y te lo entrega en el mostrador. Tienes 15 días para devolverlo.</p>
+  {% else %}
+    <p class="ayuda">No hay ejemplares para solicitar en este momento.</p>
+  {% endif %}
+</div>
+{% elif not user.is_authenticated and libro.disponibles %}
+<p><a class="boton" href="{% url 'iniciar_sesion' %}">Inicia sesión para solicitar este libro</a></p>
+{% endif %}
 {% if user.perfil.es_personal and libro.disponibles %}
 <p><a class="boton" href="{% url 'prestamos' %}?libro={{ libro.pk }}">Registrar un préstamo de este libro</a></p>
 {% endif %}

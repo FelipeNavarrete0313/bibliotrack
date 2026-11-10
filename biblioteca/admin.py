@@ -6,6 +6,6 @@ páginas propias de la aplicación.
 
 from django.contrib import admin
 
-from .models import Libro, Perfil, Prestamo, Reserva
+from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
 
-admin.site.register([Perfil, Libro, Prestamo, Reserva])
+admin.site.register([Perfil, Libro, Prestamo, Reserva, Solicitud])

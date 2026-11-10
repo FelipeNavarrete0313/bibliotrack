@@ -38,6 +38,10 @@ class Perfil(models.Model):
     def prestamos_activos(self):
         return self.prestamos.filter(estado=Prestamo.ACTIVO).count()
 
+    @property
+    def solicitudes_pendientes(self):
+        return self.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
+
 
 class Libro(models.Model):
     titulo = models.CharField("título", max_length=200)
@@ -110,3 +114,27 @@ class Reserva(models.Model):
 
     def __str__(self):
         return f"Reserva de {self.libro.titulo} para {self.lector.nombre}"
+
+
+class Solicitud(models.Model):
+    """HU-17: el lector pide un libro en línea y el bibliotecario lo entrega o lo rechaza."""
+
+    PENDIENTE = "pendiente"
+    ENTREGADA = "entregada"
+    RECHAZADA = "rechazada"
+    CANCELADA = "cancelada"
+    ESTADOS = [(PENDIENTE, "Pendiente"), (ENTREGADA, "Entregada"), (RECHAZADA, "Rechazada"), (CANCELADA, "Cancelada")]
+
+    lector = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name="solicitudes")
+    libro = models.ForeignKey(Libro, on_delete=models.PROTECT, related_name="solicitudes")
+    creada = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=PENDIENTE)
+    atendida = models.DateTimeField("atendida el", null=True, blank=True)
+    prestamo = models.OneToOneField(Prestamo, on_delete=models.SET_NULL, null=True, blank=True, related_name="solicitud")
+
+    class Meta:
+        ordering = ["creada"]
+        verbose_name_plural = "solicitudes"
+
+    def __str__(self):
+        return f"Solicitud de {self.libro.titulo} por {self.lector.nombre}"

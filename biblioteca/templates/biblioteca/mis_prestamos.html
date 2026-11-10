@@ -5,6 +5,28 @@
 {% if sin_perfil %}
 <p class="vacio">Tu cuenta no tiene un perfil de lector en BiblioTrack, así que no tiene préstamos.</p>
 {% else %}
+<h2>Mis solicitudes</h2>
+{% if solicitudes %}
+<table>
+  <tr><th>Libro</th><th>Solicitada</th><th>Estado</th><th></th></tr>
+  {% for s in solicitudes %}
+  <tr>
+    <td><a href="{% url 'detalle_libro' s.libro.pk %}">{{ s.libro.titulo }}</a></td>
+    <td>{{ s.creada|date:"d/m/Y" }}</td>
+    <td class="estado-{{ s.estado }}">{{ s.get_estado_display }}</td>
+    <td>
+      {% if s.estado == 'pendiente' %}
+      <form method="post" action="{% url 'cancelar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario">Cancelar solicitud</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="ayuda">Una solicitud pendiente espera a que la biblioteca te entregue el libro en el mostrador. Al entregarlo, aparece abajo como préstamo activo.</p>
+{% else %}
+<p class="vacio">No has solicitado libros. Busca uno en el <a href="{% url 'catalogo' %}">catálogo</a> y pulsa «Solicitar préstamo».</p>
+{% endif %}
+
 <h2>Préstamos activos</h2>
 {% if activos %}
 <table>
