@@ -63,7 +63,7 @@ Reglas comunes a todas las pantallas:
 |   Lector                       | Bibliotecario / Administrador|
 |   +-------------------------+  | +-------------------------+  |
 |   | Buscar libros           |  | | Registrar un préstamo   |  |
-|   | Mis préstamos (pronto)  |  | | Registrar un libro      |  |
+|   | Mis préstamos           |  | | Registrar un libro      |  |
 |   +-------------------------+  | | Buscar libros           |  |
 |                                | +-------------------------+  |
 +--------------------------------------------------------------+

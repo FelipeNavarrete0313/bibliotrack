@@ -84,6 +84,7 @@ Los votos son de un equipo de ejemplo de cuatro desarrolladores (Dev A a Dev D).
 | HU-11 | Consultar mis préstamos y fechas de devolución | S2 | 3 | 12 | Consulta con dos reglas de color y un historial. Sin escritura de datos. |
 | HU-17 | Solicitar un préstamo en línea | S2 | 5 | 20 | Nuevo modelo con migración, dos actores (lector y bibliotecario) y reutiliza las reglas de HU-09. Tamaño parecido a HU-09. |
 | BUG-04 | Al entregar una solicitud desde el panel Admin no se crea el préstamo ni se descuenta el ejemplar | S2 | 2 | 8 | Causa clara: el panel Admin guarda el campo sin pasar por las reglas. Se mueven las reglas a un servicio común y se usan también en el Admin. |
+| BUG-05 | Una solicitud o un préstamo se puede atender dos veces con un doble clic | S2 | 3 | 12 | Causa clara (estado leído antes de la transacción), pero toca los tres servicios de préstamo, las vistas y la configuración de SQLite. |
 | HU-08 | Editar o dar de baja un libro | S2 | 3 | 12 | Edición con una regla (ISBN fijo) y baja lógica con confirmación y una restricción. |
 | T-05 | Desplegar la aplicación en un ambiente de pruebas | S2 | 3 | 12 | Servicio de hosting nuevo para el equipo: incertidumbre en la configuración. |
 | BUG-01 | La búsqueda no encuentra libros cuando el título tiene tilde | S2 | 2 | 8 | Causa clara (comparación sin normalizar) y arreglo localizado en una función. |
@@ -95,13 +96,28 @@ Los votos son de un equipo de ejemplo de cuatro desarrolladores (Dev A a Dev D).
 | HU-14 | Recibir un aviso por correo antes del vencimiento | S3 | 5 | 20 | Tarea programada y envío de correos: infraestructura nueva para el equipo. |
 | T-06 | Escribir el manual de usuario y la documentación técnica | S3 | 3 | 12 | Documentación con capturas; trabajo conocido. |
 | BUG-03 | El historial de préstamos muestra las fechas en formato mes/día/año | S3 | 2 | 8 | Cambio de formato de fecha en una plantilla, más su prueba. |
+| BUG-06 | Editar los ejemplares o borrar un préstamo en el panel Admin descuadra la disponibilidad | S3 | 3 | 12 | Varios casos en el Admin con causa conocida; la regla de ejemplares ya existe en HU-08 y se reutiliza. |
+| BUG-07 | Varias solicitudes pendientes compiten por el mismo ejemplar | S3 | 2 | 8 | Regla nueva pequeña en `solicitudes.py` y un dato más en el detalle del libro. |
 | HU-15 | Reporte de los libros más prestados | — | 5 | 20 | Consulta agregada con filtros y exportación a PDF y Excel: dos librerías nuevas. |
 | HU-16 | Calcular la multa por devolución tardía | — | 5 | 20 | Cálculo con días hábiles y un bloqueo sobre los préstamos; reglas que tocan HU-09. |
+| T-09 | Unificar las reglas de préstamo que el panel Admin repite | — | 2 | 8 | Refactorización sin cambio de comportamiento; las pruebas actuales protegen el cambio. |
+| T-10 | Agregar linter y medición de cobertura al CI | — | 2 | 8 | Herramientas conocidas; el riesgo está en corregir lo que encuentre el linter. |
+| T-11 | Mejorar la accesibilidad y los mensajes de las páginas | — | 2 | 8 | Cambios pequeños en varias plantillas, sin lógica nueva. |
+| T-12 | Paginar el catálogo, los préstamos activos y el historial | — | 2 | 8 | Paginación estándar de Django en tres páginas. |
+| BUG-08 | El registro acepta documentos con símbolos y contraseñas muy comunes | — | 1 | 4 | Dos validaciones en un formulario que ya existe. |
 
 | Sprint | Puntos | Horas |
 | --- | --- | --- |
 | Sprint 1 | 30 | 120 |
-| Sprint 2 | 29 | 116 |
-| Sprint 3 | 26 | 104 |
-| Sin sprint | 10 | 40 |
-| **Total** | **95** | **380** |
+| Sprint 2 | 32 | 128 |
+| Sprint 3 | 31 | 124 |
+| Sin sprint | 19 | 76 |
+| **Total** | **112** | **448** |
+
+### Revisión de código del Sprint 2
+
+Una revisión del código encontró 8 ítems nuevos (17 puntos). Se estimaron igual que el resto, con Planning Poker:
+
+- **BUG-05** (3 puntos) entró al Sprint 2 por ser de prioridad Alta, igual que BUG-04. El sprint pasó de 29 a 32 puntos: 2 más que la velocidad del Sprint 1 (30). Se aceptó porque el arreglo era localizado y protegía los datos de los préstamos.
+- **BUG-06 y BUG-07** (5 puntos) van al Sprint 3, que queda en 31 puntos.
+- **T-09, T-10, T-11, T-12 y BUG-08** (9 puntos) quedan en el Product Backlog sin sprint, hasta que el Product Owner los priorice.
