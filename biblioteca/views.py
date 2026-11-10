@@ -105,7 +105,11 @@ def registrar_devolucion(request, pk):
     """HU-10: registrar la devolución de un préstamo activo (solo personal)."""
     prestamo = get_object_or_404(Prestamo.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Prestamo.ACTIVO)
     libro = prestamo.libro
-    retraso = servicios.registrar_devolucion(prestamo)
+    try:
+        retraso = servicios.registrar_devolucion(prestamo)
+    except PrestamoNoPermitido as error:  # BUG-05: otra petición ya la registró
+        messages.error(request, f"{error}.")
+        return redirect("prestamos")
     texto = f"Devolución registrada: «{libro.titulo}» de {prestamo.lector.nombre}."
     if retraso:
         messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.")
@@ -233,8 +237,12 @@ def cancelar_solicitud(request, pk):
     """HU-17: el lector cancela una solicitud suya que sigue pendiente."""
     perfil = perfil_de_lector(request)
     solicitud = get_object_or_404(Solicitud, pk=pk, lector=perfil, estado=Solicitud.PENDIENTE)
-    servicios.cerrar_solicitud(solicitud, Solicitud.CANCELADA)
-    messages.info(request, f"Cancelaste la solicitud de «{solicitud.libro.titulo}».")
+    try:
+        servicios.cerrar_solicitud(solicitud, Solicitud.CANCELADA)
+    except PrestamoNoPermitido as error:  # BUG-05: la biblioteca la atendió primero
+        messages.error(request, f"{error}.")
+    else:
+        messages.info(request, f"Cancelaste la solicitud de «{solicitud.libro.titulo}».")
     return redirect("mis_prestamos")
 
 
@@ -263,6 +271,10 @@ def entregar_solicitud(request, pk):
 def rechazar_solicitud(request, pk):
     """HU-17: el bibliotecario rechaza una solicitud pendiente."""
     solicitud = get_object_or_404(Solicitud.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Solicitud.PENDIENTE)
-    servicios.cerrar_solicitud(solicitud, Solicitud.RECHAZADA)
+    try:
+        servicios.cerrar_solicitud(solicitud, Solicitud.RECHAZADA)
+    except PrestamoNoPermitido as error:  # BUG-05: otra petición ya la atendió
+        messages.error(request, f"{error}.")
+        return redirect("prestamos")
     messages.info(request, f"Rechazaste la solicitud de «{solicitud.libro.titulo}» de {solicitud.lector.nombre}.")
     return redirect("prestamos")

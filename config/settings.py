@@ -57,6 +57,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        # BUG-05: SQLite ignora select_for_update. Con IMMEDIATE cada transacción toma
+        # el bloqueo de escritura al empezar, así dos peticiones no cambian lo mismo a la vez.
+        "OPTIONS": {"transaction_mode": "IMMEDIATE"},
     }
 }
 
