@@ -34,23 +34,36 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 ## Documentación
 
 - [Product Backlog](docs/product-backlog.md)
+- [Modelo de datos](docs/modelo-datos.md)
 - [Cómo trabajamos: Scrum en GitHub](docs/scrum.md)
 - [Definición de terminado](docs/definicion-de-terminado.md)
 - [Sprint 1: review y retrospectiva](docs/sprints/sprint-1.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
+## Preparar la base de datos
+
+```bash
+py -m pip install -r requirements-dev.txt
+py manage.py migrate         # crea la base de datos (db.sqlite3)
+py manage.py cargar_datos    # 20 libros y 5 usuarios de prueba
+```
+
+En Mac o Linux usa `python3` en lugar de `py`.
+
 ## Ejecutar las pruebas
 
 ```bash
-pip install -r requirements-dev.txt
-pytest
+py -m pytest -v
 ```
 
 ## Estructura
 
 ```
-src/bibliotrack/   código de la aplicación
-tests/             pruebas automáticas
+manage.py          punto de entrada de Django
+config/            configuración de Django
+biblioteca/        app de Django: modelos, datos de prueba y sus pruebas
+src/bibliotrack/   reglas del negocio (búsqueda y préstamos), sin Django
+tests/             pruebas de las reglas del negocio
 docs/              backlog, Scrum y sprints
 .github/           plantillas de issues y PR, y el workflow de CI
 ```
