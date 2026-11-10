@@ -1,3 +1,4 @@
 [tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["src", "."]
+testpaths = ["tests", "biblioteca/tests"]

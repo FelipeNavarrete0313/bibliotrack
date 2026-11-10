@@ -34,23 +34,49 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 ## Documentación
 
 - [Product Backlog](docs/product-backlog.md)
+- [Modelo de datos](docs/modelo-datos.md)
+- [Prototipos de interfaz](docs/wireframes.md)
 - [Cómo trabajamos: Scrum en GitHub](docs/scrum.md)
 - [Definición de terminado](docs/definicion-de-terminado.md)
 - [Sprint 1: review y retrospectiva](docs/sprints/sprint-1.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
+## Preparar la base de datos
+
+```bash
+py -m pip install -r requirements-dev.txt
+py manage.py migrate         # crea la base de datos (db.sqlite3)
+py manage.py cargar_datos    # 20 libros y 5 usuarios de prueba
+```
+
+En Mac o Linux usa `python3` en lugar de `py`.
+
+## Ejecutar la aplicación
+
+Después de preparar la base de datos:
+
+```bash
+py manage.py runserver
+```
+
+Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presiona `Ctrl + C` en la terminal.
+
+Para iniciar sesión usa uno de los usuarios de prueba de [`docs/modelo-datos.md`](docs/modelo-datos.md#datos-de-prueba), por ejemplo `ana@bibliotrack.test` (lector) o `sofia@bibliotrack.test` (bibliotecaria), con la contraseña `Biblio2026`.
+
 ## Ejecutar las pruebas
 
 ```bash
-pip install -r requirements-dev.txt
-pytest
+py -m pytest -v
 ```
 
 ## Estructura
 
 ```
-src/bibliotrack/   código de la aplicación
-tests/             pruebas automáticas
+manage.py          punto de entrada de Django
+config/            configuración de Django
+biblioteca/        app de Django: modelos, vistas, plantillas, datos de prueba y sus pruebas
+src/bibliotrack/   reglas del negocio (búsqueda y préstamos), sin Django
+tests/             pruebas de las reglas del negocio
 docs/              backlog, Scrum y sprints
 .github/           plantillas de issues y PR, y el workflow de CI
 ```

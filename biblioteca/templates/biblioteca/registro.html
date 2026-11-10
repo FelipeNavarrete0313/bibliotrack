@@ -1,0 +1,18 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Crear una cuenta{% endblock %}
+{% block contenido %}
+<h1>Crear una cuenta</h1>
+<form class="tarjeta angosta" method="post" action="{% url 'registro' %}">
+  {% csrf_token %}
+  {% for campo in form %}
+  <div class="form-fila">
+    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}
+    {% if campo.help_text %}<span class="ayuda">{{ campo.help_text }}</span>{% endif %}
+    {{ campo.errors }}
+  </div>
+  {% endfor %}
+  <button type="submit">Crear cuenta</button>
+  <p class="ayuda">¿Ya tienes cuenta? <a href="{% url 'iniciar_sesion' %}">Inicia sesión</a></p>
+</form>
+{% endblock %}

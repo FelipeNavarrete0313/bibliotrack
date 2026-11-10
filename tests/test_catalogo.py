@@ -21,3 +21,12 @@ def test_filtra_por_categoria():
 
 def test_sin_resultados_devuelve_lista_vacia():
     assert buscar(LIBROS, "inexistente") == []
+
+
+def test_busqueda_ignora_tildes():
+    # BUG-01: buscar "algebra" debe encontrar "Álgebra de Baldor"
+    assert [l["titulo"] for l in buscar(LIBROS, "algebra")] == ["Álgebra de Baldor"]
+
+
+def test_busqueda_ignora_tildes_en_el_autor():
+    assert [l["titulo"] for l in buscar(LIBROS, "garcia marquez")] == ["Cien años de soledad"]

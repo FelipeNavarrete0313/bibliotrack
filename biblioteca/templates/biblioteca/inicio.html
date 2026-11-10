@@ -1,0 +1,13 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Mi inicio{% endblock %}
+{% block contenido %}
+<h1>Hola, {{ user.first_name|default:user.email }}</h1>
+{% if perfil %}<p class="ayuda">Rol: {{ perfil.get_rol_display }}</p>{% endif %}
+
+<div class="opciones">
+  <a href="{% url 'catalogo' %}"><div class="tarjeta"><h2>Buscar libros</h2><p class="ayuda">Busca por título, autor o categoría y mira cuántos ejemplares hay.</p></div></a>
+  {% if perfil.es_personal %}
+  <a href="{% url 'registrar_libro' %}"><div class="tarjeta"><h2>Registrar un libro</h2><p class="ayuda">Agrega un título nuevo al catálogo con sus ejemplares.</p></div></a>
+  {% endif %}
+</div>
+{% endblock %}

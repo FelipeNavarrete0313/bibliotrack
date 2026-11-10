@@ -1,0 +1,17 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Registrar un libro{% endblock %}
+{% block contenido %}
+<h1>Registrar un libro</h1>
+<form class="tarjeta angosta" method="post" action="{% url 'registrar_libro' %}">
+  {% csrf_token %}
+  {% for campo in form %}
+  <div class="form-fila">
+    <label for="{{ campo.id_for_label }}">{{ campo.label|capfirst }}{% if campo.field.required %} *{% endif %}</label>
+    {{ campo }}
+    {{ campo.errors }}
+  </div>
+  {% endfor %}
+  <button type="submit">Guardar</button>
+  <p class="ayuda">* Obligatorio. Todos los ejemplares quedan disponibles al registrar el libro.</p>
+</form>
+{% endblock %}

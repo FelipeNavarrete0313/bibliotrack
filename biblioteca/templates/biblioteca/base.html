@@ -1,0 +1,45 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}BiblioTrack{% endblock %} · BiblioTrack</title>
+  <link rel="stylesheet" href="{% static 'biblioteca/estilos.css' %}">
+</head>
+<body>
+  {% with pagina=request.resolver_match.url_name perfil=user.perfil %}
+  <header>
+    <div class="contenedor">
+      <a class="marca" href="{% if user.is_authenticated %}{% url 'inicio' %}{% else %}{% url 'catalogo' %}{% endif %}">BiblioTrack</a>
+      <nav aria-label="Principal">
+        {% if user.is_authenticated %}
+        <a href="{% url 'inicio' %}" {% if pagina == 'inicio' %}class="activo"{% endif %}>Mi inicio</a>
+        {% endif %}
+        <a href="{% url 'catalogo' %}" {% if pagina == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
+        {% if perfil.es_personal %}
+        <a href="{% url 'registrar_libro' %}" {% if pagina == 'registrar_libro' %}class="activo"{% endif %}>Registrar libro</a>
+        {% endif %}
+      </nav>
+      <div class="cuenta">
+        {% if user.is_authenticated %}
+          <span>{{ user.get_full_name|default:user.email }}</span>
+          <form method="post" action="{% url 'cerrar_sesion' %}">{% csrf_token %}<button type="submit">Cerrar sesión</button></form>
+        {% else %}
+          <a href="{% url 'iniciar_sesion' %}" {% if pagina == 'iniciar_sesion' %}class="activo"{% endif %}>Iniciar sesión</a>
+          <a href="{% url 'registro' %}" {% if pagina == 'registro' %}class="activo"{% endif %}>Registrarse</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+  {% endwith %}
+  <main class="contenedor">
+    {% if messages %}
+      <ul class="mensajes">
+        {% for mensaje in messages %}<li class="{{ mensaje.tags }}">{{ mensaje }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+  <p class="pie">BiblioTrack · proyecto académico de ejemplo · SENA</p>
+</body>
+</html>
