@@ -1,14 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from bibliotrack.catalogo import buscar
 
 from . import seguridad
 from .forms import InicioSesionForm, RegistroForm
-from .models import Libro
+from .models import Libro, Prestamo
 
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
 MENSAJE_BLOQUEO = (
@@ -31,6 +31,15 @@ def catalogo(request):
         "categorias": categorias,
         "hubo_busqueda": bool(texto or categoria),
     })
+
+
+def detalle_libro(request, pk):
+    """HU-07: detalle y disponibilidad de un libro."""
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    proxima = None
+    if libro.disponibles == 0:
+        proxima = libro.prestamos.filter(estado=Prestamo.ACTIVO).order_by("fecha_devolucion").first()
+    return render(request, "biblioteca/detalle_libro.html", {"libro": libro, "proxima": proxima})
 
 
 def iniciar_sesion(request):

@@ -17,7 +17,7 @@
   <tr><th>Título</th><th>Autor</th><th>Categoría</th><th>Disponibilidad</th></tr>
   {% for libro in resultados %}
   <tr>
-    <td>{{ libro.titulo }}</td>
+    <td><a href="{% url 'detalle_libro' libro.id %}">{{ libro.titulo }}</a></td>
     <td>{{ libro.autor }}</td>
     <td>{{ libro.categoria }}</td>
     <td>{% if libro.disponibles %}<span class="disponible">{{ libro.disponibles }} disponible{{ libro.disponibles|pluralize }}</span>{% else %}<span class="agotado">Agotado</span>{% endif %}</td>

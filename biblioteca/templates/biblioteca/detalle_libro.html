@@ -1,0 +1,23 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}{{ libro.titulo }}{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'catalogo' %}">← Volver al catálogo</a></p>
+<h1>{{ libro.titulo }}</h1>
+<div class="tarjeta">
+  <dl>
+    <dt>Autor</dt><dd>{{ libro.autor }}</dd>
+    <dt>ISBN</dt><dd>{{ libro.isbn }}</dd>
+    <dt>Categoría</dt><dd>{{ libro.categoria }}</dd>
+    <dt>Descripción</dt><dd>{{ libro.descripcion|default:"Sin descripción." }}</dd>
+    <dt>Disponibilidad</dt>
+    <dd>
+      {% if libro.disponibles %}
+        <span class="disponible">{{ libro.disponibles }} de {{ libro.total_ejemplares }} ejemplares disponibles</span>
+      {% else %}
+        <span class="agotado">Agotado</span> · 0 de {{ libro.total_ejemplares }} ejemplares
+        {% if proxima %}<br>Próxima devolución: {{ proxima.fecha_devolucion|date:"d/m/Y" }}{% endif %}
+      {% endif %}
+    </dd>
+  </dl>
+</div>
+{% endblock %}
