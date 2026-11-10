@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 from bibliotrack.catalogo import buscar
 
 from . import seguridad
-from .forms import InicioSesionForm
+from .forms import InicioSesionForm, RegistroForm
 from .models import Libro
 
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
@@ -54,6 +54,18 @@ def iniciar_sesion(request):
             seguridad.registrar_fallo(correo)
             messages.error(request, MENSAJE_BLOQUEO if seguridad.esta_bloqueado(correo) else MENSAJE_CREDENCIALES)
     return render(request, "biblioteca/iniciar_sesion.html", {"form": form})
+
+
+def registro(request):
+    """HU-01: registro de lector."""
+    if request.user.is_authenticated:
+        return redirect("inicio")
+    form = RegistroForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.guardar()
+        messages.success(request, "Tu cuenta fue creada. Ya puedes iniciar sesión.")
+        return redirect("iniciar_sesion")
+    return render(request, "biblioteca/registro.html", {"form": form})
 
 
 @require_POST

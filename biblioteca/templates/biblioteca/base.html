@@ -23,6 +23,7 @@
           <form method="post" action="{% url 'cerrar_sesion' %}">{% csrf_token %}<button type="submit">Cerrar sesión</button></form>
         {% else %}
           <a href="{% url 'iniciar_sesion' %}" {% if pagina == 'iniciar_sesion' %}class="activo"{% endif %}>Iniciar sesión</a>
+          <a href="{% url 'registro' %}" {% if pagina == 'registro' %}class="activo"{% endif %}>Registrarse</a>
         {% endif %}
       </div>
     </div>
