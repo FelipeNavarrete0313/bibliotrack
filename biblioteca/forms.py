@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
-from .models import Perfil
+from .models import Libro, Perfil
 
 
 class InicioSesionForm(forms.Form):
@@ -56,3 +56,27 @@ class RegistroForm(forms.Form):
             first_name=datos["nombre"], last_name=datos["apellido"],
         )
         return Perfil.objects.create(usuario=usuario, documento=datos["documento"], rol=Perfil.LECTOR)
+
+
+class LibroForm(forms.ModelForm):
+    """HU-05: registrar un libro."""
+
+    class Meta:
+        model = Libro
+        fields = ["titulo", "autor", "isbn", "categoria", "descripcion", "total_ejemplares"]
+        widgets = {"descripcion": forms.Textarea(attrs={"rows": 3})}
+        error_messages = {"isbn": {"unique": "Ya existe un libro con este ISBN."}}
+
+    def clean_total_ejemplares(self):
+        total = self.cleaned_data["total_ejemplares"]
+        if total < 1:
+            raise forms.ValidationError("Debe haber al menos 1 ejemplar.")
+        return total
+
+    def save(self, commit=True):
+        libro = super().save(commit=False)
+        if libro.pk is None:
+            libro.disponibles = libro.total_ejemplares
+        if commit:
+            libro.save()
+        return libro

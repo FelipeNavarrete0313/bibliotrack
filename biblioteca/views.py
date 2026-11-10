@@ -7,8 +7,9 @@ from django.views.decorators.http import require_POST
 from bibliotrack.catalogo import buscar
 
 from . import seguridad
-from .forms import InicioSesionForm, RegistroForm
+from .forms import InicioSesionForm, LibroForm, RegistroForm
 from .models import Libro, Prestamo
+from .permisos import solo_personal
 
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
 MENSAJE_BLOQUEO = (
@@ -40,6 +41,17 @@ def detalle_libro(request, pk):
     if libro.disponibles == 0:
         proxima = libro.prestamos.filter(estado=Prestamo.ACTIVO).order_by("fecha_devolucion").first()
     return render(request, "biblioteca/detalle_libro.html", {"libro": libro, "proxima": proxima})
+
+
+@solo_personal
+def registrar_libro(request):
+    """HU-05: registrar un libro en el catálogo (solo personal)."""
+    form = LibroForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        libro = form.save()
+        messages.success(request, f"«{libro.titulo}» quedó registrado en el catálogo.")
+        return redirect("detalle_libro", pk=libro.pk)
+    return render(request, "biblioteca/registrar_libro.html", {"form": form})
 
 
 def iniciar_sesion(request):
