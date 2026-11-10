@@ -35,37 +35,48 @@ def crear_prestamo(lector, libro):
 
 
 def entregar_solicitud(solicitud):
-    """HU-17: entrega una solicitud pendiente creando su préstamo."""
-    if solicitud.estado != Solicitud.PENDIENTE:
-        raise PrestamoNoPermitido("La solicitud ya no está pendiente")
+    """HU-17: entrega una solicitud pendiente creando su préstamo.
+
+    BUG-05: el estado se cambia con un UPDATE que solo afecta a la solicitud si
+    sigue pendiente en la base de datos. Si otra petición ya la atendió, no se
+    crea un segundo préstamo.
+    """
     with transaction.atomic():
+        ahora = timezone.now()
+        _tomar(Solicitud, solicitud, Solicitud.PENDIENTE, "La solicitud ya no está pendiente",
+               estado=Solicitud.ENTREGADA, atendida=ahora)
         prestamo = crear_prestamo(solicitud.lector, solicitud.libro)
-        solicitud.estado = Solicitud.ENTREGADA
-        solicitud.atendida = timezone.now()
-        solicitud.prestamo = prestamo
-        solicitud.save(update_fields=["estado", "atendida", "prestamo"])
+        Solicitud.objects.filter(pk=solicitud.pk).update(prestamo=prestamo)
+    solicitud.estado, solicitud.atendida, solicitud.prestamo = Solicitud.ENTREGADA, ahora, prestamo
     return prestamo
 
 
 def cerrar_solicitud(solicitud, estado):
-    """HU-17: rechaza o cancela una solicitud pendiente. No cambia ejemplares."""
-    solicitud.estado = estado
-    solicitud.atendida = timezone.now()
-    solicitud.save(update_fields=["estado", "atendida"])
+    """HU-17: rechaza o cancela una solicitud pendiente. No cambia ejemplares.
+
+    BUG-05: si la solicitud ya no está pendiente, lanza PrestamoNoPermitido.
+    """
+    ahora = timezone.now()
+    _tomar(Solicitud, solicitud, Solicitud.PENDIENTE, "La solicitud ya no está pendiente",
+           estado=estado, atendida=ahora)
+    solicitud.estado, solicitud.atendida = estado, ahora
 
 
 def registrar_devolucion(prestamo, hoy=None):
-    """HU-10: cierra un préstamo activo y suma el ejemplar. Devuelve los días de retraso."""
+    """HU-10: cierra un préstamo activo y suma el ejemplar. Devuelve los días de retraso.
+
+    BUG-05: si el préstamo ya fue devuelto, lanza PrestamoNoPermitido y no suma nada.
+    """
     hoy = hoy or timezone.localdate()
     with transaction.atomic():
+        _tomar(Prestamo, prestamo, Prestamo.ACTIVO, "El préstamo ya fue devuelto",
+               estado=Prestamo.DEVUELTO, fecha_entrega=hoy)
         libro = Libro.objects.select_for_update().get(pk=prestamo.libro_id)
         libro.disponibles = devolver_ejemplar(
             {"disponibles": libro.disponibles, "total_ejemplares": libro.total_ejemplares},
         )["disponibles"]
         libro.save(update_fields=["disponibles"])
-        prestamo.estado = Prestamo.DEVUELTO
-        prestamo.fecha_entrega = hoy
-        prestamo.save(update_fields=["estado", "fecha_entrega"])
+    prestamo.estado, prestamo.fecha_entrega = Prestamo.DEVUELTO, hoy
     return dias_de_retraso(prestamo.fecha_devolucion, hoy)
 
 
@@ -77,3 +88,13 @@ def borrar_prestamo(prestamo):
             libro.disponibles = min(libro.disponibles + 1, libro.total_ejemplares)
             libro.save(update_fields=["disponibles"])
         prestamo.delete()
+
+
+def _tomar(modelo, objeto, estado_esperado, mensaje, **cambios):
+    """Cambia el registro solo si en la base de datos sigue en `estado_esperado` (BUG-05).
+
+    Un objeto leído antes de otra petición puede tener un estado viejo; el UPDATE
+    con el estado en el WHERE lo resuelve en un solo paso.
+    """
+    if not modelo.objects.filter(pk=objeto.pk, estado=estado_esperado).update(**cambios):
+        raise PrestamoNoPermitido(mensaje)
