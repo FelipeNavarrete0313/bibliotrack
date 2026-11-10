@@ -1,0 +1,65 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Mis préstamos{% endblock %}
+{% block contenido %}
+<h1>Mis préstamos</h1>
+{% if sin_perfil %}
+<p class="vacio">Tu cuenta no tiene un perfil de lector en BiblioTrack, así que no tiene préstamos.</p>
+{% else %}
+<h2>Mis solicitudes</h2>
+{% if solicitudes %}
+<table>
+  <tr><th>Libro</th><th>Solicitada</th><th>Estado</th><th></th></tr>
+  {% for s in solicitudes %}
+  <tr>
+    <td><a href="{% url 'detalle_libro' s.libro.pk %}">{{ s.libro.titulo }}</a></td>
+    <td>{{ s.creada|date:"d/m/Y" }}</td>
+    <td class="estado-{{ s.estado }}">{{ s.get_estado_display }}</td>
+    <td>
+      {% if s.estado == 'pendiente' %}
+      <form method="post" action="{% url 'cancelar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario">Cancelar solicitud</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="ayuda">Una solicitud pendiente espera a que la biblioteca te entregue el libro en el mostrador. Al entregarlo, aparece abajo como préstamo activo.</p>
+{% else %}
+<p class="vacio">No has solicitado libros. Busca uno en el <a href="{% url 'catalogo' %}">catálogo</a> y pulsa «Solicitar préstamo».</p>
+{% endif %}
+
+<h2>Préstamos activos</h2>
+{% if activos %}
+<table>
+  <tr><th>Libro</th><th>Prestado el</th><th>Devolver el</th><th>Estado</th></tr>
+  {% for fila in activos %}
+  <tr class="{% if fila.estado == 'vencido' %}fila-vencido{% elif fila.estado == 'por_vencer' %}fila-por-vencer{% endif %}">
+    <td><a href="{% url 'detalle_libro' fila.prestamo.libro.pk %}">{{ fila.prestamo.libro.titulo }}</a></td>
+    <td>{{ fila.prestamo.fecha_prestamo|date:"d/m/Y" }}</td>
+    <td>{{ fila.prestamo.fecha_devolucion|date:"d/m/Y" }}</td>
+    <td class="{% if fila.estado == 'vencido' %}vencido{% elif fila.estado == 'por_vencer' %}por-vencer{% endif %}">{{ fila.aviso }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="ayuda">En rojo, los préstamos vencidos; en amarillo, los que vencen en 3 días o menos. Devuelve el libro en el mostrador de la biblioteca.</p>
+{% else %}
+<p class="vacio">No tienes préstamos activos.</p>
+{% endif %}
+
+<h2>Historial de préstamos devueltos</h2>
+{% if historial %}
+<table>
+  <tr><th>Libro</th><th>Prestado el</th><th>Debía devolverse el</th><th>Entregado el</th></tr>
+  {% for p in historial %}
+  <tr>
+    <td>{{ p.libro.titulo }}</td>
+    <td>{{ p.fecha_prestamo|date:"d/m/Y" }}</td>
+    <td>{{ p.fecha_devolucion|date:"d/m/Y" }}</td>
+    <td>{{ p.fecha_entrega|date:"d/m/Y" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vacio">Todavía no has devuelto ningún libro.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

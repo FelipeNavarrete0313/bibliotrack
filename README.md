@@ -4,7 +4,7 @@
 
 Sistema web de préstamos de biblioteca para un centro de formación.
 
-> **Proyecto académico de ejemplo.** BiblioTrack es un proyecto inventado para demostrar cómo se administra y gestiona un proyecto de software con **GitHub Projects** y **Scrum**. El foco está en la gestión (backlog, issues, sprints, tablero y pull requests); el código es un esqueleto mínimo y los issues cerrados del Sprint 1 simulan trabajo ya terminado.
+> **Proyecto académico de ejemplo.** BiblioTrack es un proyecto inventado para demostrar cómo se administra y gestiona un proyecto de software con **GitHub Projects** y **Scrum**. El foco está en la gestión (backlog, estimación, issues, sprints, tablero, pull requests y trazabilidad). El código es una aplicación Django pequeña: cada historia terminada tiene su rama, su pull request y sus pruebas.
 
 ## Tablero del proyecto
 
@@ -12,7 +12,7 @@ Sistema web de préstamos de biblioteca para un centro de formación.
 
 | Vista | Para qué sirve |
 | --- | --- |
-| Backlog | Tabla con todo el Product Backlog agrupado por sprint, con prioridad y estimación |
+| Backlog | Tabla con todo el Product Backlog agrupado por sprint, con prioridad, puntos y horas |
 | Board | Tablero Kanban: Todo → In progress → In review → Done |
 | Current iteration | Solo el sprint en curso |
 | Roadmap | Línea de tiempo con los tres sprints |
@@ -25,15 +25,18 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 
 | Elemento | En GitHub | Cantidad |
 | --- | --- | --- |
-| Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 16 |
-| Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 6 |
+| Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 17 |
+| Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 8 |
 | Bugs | Issues con `tipo: bug` | 3 |
 | Épicas | Etiquetas `épica: …` | 5 |
 | Sprints | Hitos (milestones) e iteraciones del Project | 3 |
+| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 93 puntos · 372 horas |
 
 ## Documentación
 
 - [Product Backlog](docs/product-backlog.md)
+- [Estimación: Planning Poker, puntos y horas](docs/estimacion.md)
+- [Trazabilidad: de la historia al código](docs/trazabilidad.md)
 - [Modelo de datos](docs/modelo-datos.md)
 - [Prototipos de interfaz](docs/wireframes.md)
 - [Cómo trabajamos: Scrum en GitHub](docs/scrum.md)
@@ -61,7 +64,43 @@ py manage.py runserver
 
 Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presiona `Ctrl + C` en la terminal.
 
-Para iniciar sesión usa uno de los usuarios de prueba de [`docs/modelo-datos.md`](docs/modelo-datos.md#datos-de-prueba), por ejemplo `ana@bibliotrack.test` (lector) o `sofia@bibliotrack.test` (bibliotecaria), con la contraseña `Biblio2026`.
+### Páginas
+
+| Página | Dirección | Quién la ve | Historia |
+| --- | --- | --- | --- |
+| Catálogo con buscador | `/` | Todos | HU-06, T-07 |
+| Detalle de un libro (y «Solicitar préstamo» para lectores) | `/libros/<id>/` | Todos | HU-07, HU-17 |
+| Iniciar sesión | `/iniciar-sesion/` | Visitantes | HU-02 |
+| Crear una cuenta | `/registro/` | Visitantes | HU-01 |
+| Mi inicio | `/inicio/` | Con sesión | HU-02 |
+| Registrar un libro | `/libros/nuevo/` | Bibliotecario y administrador | HU-05 |
+| Mis préstamos: solicitudes, préstamos activos e historial | `/mis-prestamos/` | Lectores | HU-11, HU-17 |
+| Préstamos: solicitudes pendientes, préstamos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-17 |
+
+Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las páginas de BiblioTrack.
+
+### Cómo se presta un libro
+
+1. El **lector** inicia sesión, abre un libro disponible y pulsa **«Solicitar préstamo»** (HU-17).
+2. La **bibliotecaria** entra a **Préstamos**, ve la solicitud pendiente y pulsa **«Entregar»**. Se crea el préstamo a 15 días con las reglas de HU-09. También puede **«Rechazar»**.
+3. El lector ve su préstamo y la fecha de devolución en **Mis préstamos** (HU-11). Puede cancelar una solicitud mientras siga pendiente.
+4. Cuando devuelve el libro, la bibliotecaria pulsa **«Registrar devolución»** en Préstamos (HU-10). Si hay retraso, se muestran los días.
+
+La bibliotecaria también puede prestar directamente, sin solicitud, con el documento del lector.
+
+### Panel interno de Django (opcional)
+
+Para revisar la base de datos crea un superusuario con `py manage.py createsuperuser` (escribe también el correo) y entra a `http://127.0.0.1:8000/admin/` escribiendo la dirección. El superusuario no tiene rol en BiblioTrack; para usarlo en las páginas de la aplicación, créale un Perfil desde el panel.
+
+### Usuarios de prueba
+
+Todos usan la contraseña `Biblio2026`. También puedes crear tu propia cuenta de lector en «Registrarse».
+
+| Correo | Rol |
+| --- | --- |
+| ana@bibliotrack.test | Lector |
+| sofia@bibliotrack.test | Bibliotecario |
+| diego@bibliotrack.test | Administrador |
 
 ## Ejecutar las pruebas
 

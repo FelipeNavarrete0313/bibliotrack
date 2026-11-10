@@ -2,6 +2,32 @@
 {% block titulo %}Préstamos{% endblock %}
 {% block contenido %}
 <h1>Préstamos</h1>
+<section class="solicitudes">
+  <h2>Solicitudes pendientes{% if pendientes %} ({{ pendientes|length }}){% endif %}</h2>
+  {% if pendientes %}
+  <table>
+    <tr><th>Libro</th><th>Lector</th><th>Solicitada</th><th>Disponibles</th><th></th></tr>
+    {% for s in pendientes %}
+    <tr>
+      <td>{{ s.libro.titulo }}<br><span class="ayuda">ISBN {{ s.libro.isbn }}</span></td>
+      <td>{{ s.lector.nombre }}<br><span class="ayuda">Doc. {{ s.lector.documento }}</span></td>
+      <td>{{ s.creada|date:"d/m/Y H:i" }}</td>
+      <td>{{ s.libro.disponibles }} de {{ s.libro.total_ejemplares }}</td>
+      <td>
+        <div class="acciones">
+        <form method="post" action="{% url 'entregar_solicitud' s.pk %}">{% csrf_token %}<button type="submit">Entregar</button></form>
+        <form method="post" action="{% url 'rechazar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario">Rechazar</button></form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="ayuda">«Entregar» crea el préstamo con las mismas reglas: 15 días, máximo 3 préstamos activos y solo si hay ejemplares.</p>
+  {% else %}
+  <p class="vacio">No hay solicitudes pendientes.</p>
+  {% endif %}
+</section>
+
 <div class="dos-columnas">
   <form class="tarjeta" method="post" action="{% url 'prestamos' %}">
     {% csrf_token %}
@@ -18,13 +44,30 @@
   </form>
   <div>
     <h2 style="margin-top:0">Préstamos activos</h2>
+    <form class="buscador-pequeno" method="get" action="{% url 'prestamos' %}">
+      <input type="search" name="buscar" value="{{ buscar_prestamo }}" placeholder="Documento del lector o ISBN" aria-label="Buscar préstamo por documento o ISBN">
+      <button type="submit">Buscar</button>
+      {% if buscar_prestamo %}<a class="boton boton-secundario" href="{% url 'prestamos' %}">Ver todos</a>{% endif %}
+    </form>
     {% if activos %}
     <table>
-      <tr><th>Libro</th><th>Lector</th><th>Devolver el</th></tr>
+      <tr><th>Libro</th><th>Lector</th><th>Devolver el</th><th></th></tr>
       {% for p in activos %}
-      <tr><td>{{ p.libro.titulo }}</td><td>{{ p.lector.nombre }}</td><td>{{ p.fecha_devolucion|date:"d/m/Y" }}</td></tr>
+      <tr>
+        <td>{{ p.libro.titulo }}<br><span class="ayuda">ISBN {{ p.libro.isbn }}</span></td>
+        <td>{{ p.lector.nombre }}<br><span class="ayuda">Doc. {{ p.lector.documento }}</span></td>
+        <td>{{ p.fecha_devolucion|date:"d/m/Y" }}{% if p.fecha_devolucion < hoy %}<br><span class="vencido">Vencido</span>{% endif %}</td>
+        <td>
+          <form method="post" action="{% url 'registrar_devolucion' p.pk %}">
+            {% csrf_token %}
+            <button type="submit">Registrar devolución</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
     </table>
+    {% elif buscar_prestamo %}
+    <p class="vacio">No hay préstamos activos con el documento o ISBN «{{ buscar_prestamo }}».</p>
     {% else %}
     <p class="vacio">Todavía no hay préstamos activos.</p>
     {% endif %}

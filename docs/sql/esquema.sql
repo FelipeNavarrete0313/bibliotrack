@@ -20,3 +20,13 @@ CREATE INDEX "biblioteca_prestamo_libro_id_c71c231b" ON "biblioteca_prestamo" ("
 CREATE INDEX "biblioteca_reserva_lector_id_054f8144" ON "biblioteca_reserva" ("lector_id");
 CREATE INDEX "biblioteca_reserva_libro_id_b356f2b1" ON "biblioteca_reserva" ("libro_id");
 COMMIT;
+
+-- HU-17 · migración 0002 (py manage.py sqlmigrate biblioteca 0002)
+BEGIN;
+--
+-- Create model Solicitud
+--
+CREATE TABLE "biblioteca_solicitud" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "creada" datetime NOT NULL, "estado" varchar(10) NOT NULL, "atendida" datetime NULL, "lector_id" bigint NOT NULL REFERENCES "biblioteca_perfil" ("id") DEFERRABLE INITIALLY DEFERRED, "libro_id" bigint NOT NULL REFERENCES "biblioteca_libro" ("id") DEFERRABLE INITIALLY DEFERRED, "prestamo_id" bigint NULL UNIQUE REFERENCES "biblioteca_prestamo" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE INDEX "biblioteca_solicitud_lector_id_2a1a6344" ON "biblioteca_solicitud" ("lector_id");
+CREATE INDEX "biblioteca_solicitud_libro_id_b990b808" ON "biblioteca_solicitud" ("libro_id");
+COMMIT;
