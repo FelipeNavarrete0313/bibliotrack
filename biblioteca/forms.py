@@ -18,7 +18,9 @@ class RegistroForm(forms.Form):
     nombre = forms.CharField(label="Nombre", max_length=150)
     apellido = forms.CharField(label="Apellido", max_length=150)
     documento = forms.CharField(label="Documento", max_length=20)
-    correo = forms.CharField(label="Correo", max_length=254, widget=forms.EmailInput(attrs={"autocomplete": "email"}))
+    # BUG-02: el formato del correo se valida en el servidor, no solo en el navegador.
+    correo = forms.EmailField(label="Correo", max_length=254, widget=forms.EmailInput(attrs={"autocomplete": "email"}),
+                              error_messages={"invalid": "Escribe un correo válido, por ejemplo nombre@dominio.com."})
     contrasena = forms.CharField(label="Contraseña", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
                                  help_text="Mínimo 8 caracteres.")
     confirmacion = forms.CharField(label="Confirma la contraseña", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
