@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,10 +12,11 @@ from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
 from bibliotrack.catalogo import buscar
 from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
+from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad
 from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
-from .models import Libro, Prestamo
+from .models import Libro, Perfil, Prestamo, Solicitud
 from .permisos import solo_personal
 
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
@@ -46,7 +48,15 @@ def detalle_libro(request, pk):
     proxima = None
     if libro.disponibles == 0:
         proxima = libro.prestamos.filter(estado=Prestamo.ACTIVO).order_by("fecha_devolucion").first()
-    return render(request, "biblioteca/detalle_libro.html", {"libro": libro, "proxima": proxima})
+    perfil = getattr(request.user, "perfil", None)
+    solicitud = None
+    prestado = False
+    if perfil and perfil.rol == Perfil.LECTOR:
+        solicitud = perfil.solicitudes.filter(libro=libro, estado=Solicitud.PENDIENTE).first()
+        prestado = perfil.prestamos.filter(libro=libro, estado=Prestamo.ACTIVO).exists()
+    return render(request, "biblioteca/detalle_libro.html", {
+        "libro": libro, "proxima": proxima, "solicitud": solicitud, "prestado": prestado,
+    })
 
 
 @solo_personal
@@ -60,39 +70,49 @@ def registrar_libro(request):
     return render(request, "biblioteca/registrar_libro.html", {"form": form})
 
 
+def crear_prestamo(lector, libro):
+    """Aplica las reglas de HU-09 y guarda el préstamo. Lanza PrestamoNoPermitido si no se puede."""
+    datos_libro = libro.como_dict()
+    prestamo = registrar_prestamo(
+        {"documento": lector.documento, "prestamos_activos": lector.prestamos_activos}, datos_libro,
+    )
+    libro.disponibles = datos_libro["disponibles"]
+    libro.save(update_fields=["disponibles"])
+    return Prestamo.objects.create(
+        lector=lector, libro=libro,
+        fecha_prestamo=prestamo["fecha_prestamo"], fecha_devolucion=prestamo["fecha_devolucion"],
+    )
+
+
 @solo_personal
 def prestamos(request):
-    """HU-09: registrar un préstamo (solo personal) y ver los préstamos activos."""
+    """HU-09: registrar un préstamo (solo personal) y ver los préstamos activos.
+
+    También muestra las solicitudes pendientes de HU-17 para entregarlas o rechazarlas.
+    """
     form = PrestamoForm(request.POST or None, initial={"libro": request.GET.get("libro")})
     if request.method == "POST" and form.is_valid():
         lector, libro = form.lector, form.cleaned_data["libro"]
-        datos_libro = libro.como_dict()
         try:
-            prestamo = registrar_prestamo(
-                {"documento": lector.documento, "prestamos_activos": lector.prestamos_activos}, datos_libro,
-            )
+            with transaction.atomic():
+                prestamo = crear_prestamo(lector, libro)
         except PrestamoNoPermitido as error:
             messages.error(request, str(error))
         else:
-            with transaction.atomic():
-                libro.disponibles = datos_libro["disponibles"]
-                libro.save(update_fields=["disponibles"])
-                Prestamo.objects.create(
-                    lector=lector, libro=libro,
-                    fecha_prestamo=prestamo["fecha_prestamo"], fecha_devolucion=prestamo["fecha_devolucion"],
-                )
             messages.success(
                 request,
                 f"Préstamo registrado: «{libro.titulo}» para {lector.nombre}. "
-                f"Debe devolverlo el {prestamo['fecha_devolucion']:%d/%m/%Y}.",
+                f"Debe devolverlo el {prestamo.fecha_devolucion:%d/%m/%Y}.",
             )
             return redirect("prestamos")
     buscar_prestamo = request.GET.get("buscar", "").strip()
     activos = Prestamo.objects.filter(estado=Prestamo.ACTIVO).select_related("lector__usuario", "libro")
     if buscar_prestamo:
         activos = activos.filter(Q(lector__documento=buscar_prestamo) | Q(libro__isbn=buscar_prestamo))
+    pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).select_related("lector__usuario", "libro")
     return render(request, "biblioteca/prestamos.html", {
         "form": form, "activos": activos, "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+        "pendientes": pendientes,
     })
 
 
@@ -165,7 +185,8 @@ def cerrar_sesion(request):
 def inicio(request):
     """HU-02: página de inicio según el rol del usuario."""
     perfil = getattr(request.user, "perfil", None)
-    return render(request, "biblioteca/inicio.html", {"perfil": perfil})
+    pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).count() if perfil and perfil.es_personal else 0
+    return render(request, "biblioteca/inicio.html", {"perfil": perfil, "pendientes": pendientes})
 
 
 @login_required
@@ -187,4 +208,98 @@ def mis_prestamos(request):
             aviso = "Al día"
         activos.append({"prestamo": prestamo, "estado": estado, "aviso": aviso})
     historial = perfil.prestamos.filter(estado=Prestamo.DEVUELTO).select_related("libro").order_by("-fecha_entrega")
-    return render(request, "biblioteca/mis_prestamos.html", {"activos": activos, "historial": historial})
+    solicitudes = perfil.solicitudes.select_related("libro").order_by("-creada")[:10]
+    return render(request, "biblioteca/mis_prestamos.html", {
+        "activos": activos, "historial": historial, "solicitudes": solicitudes,
+    })
+
+
+def perfil_de_lector(request):
+    """Perfil del usuario si es lector; si no, 403 (prohibido)."""
+    perfil = getattr(request.user, "perfil", None)
+    if not (perfil and perfil.rol == Perfil.LECTOR):
+        raise PermissionDenied("Solo un lector puede solicitar préstamos.")
+    return perfil
+
+
+@login_required
+@require_POST
+def solicitar_prestamo(request, pk):
+    """HU-17: el lector solicita en línea el préstamo de un libro disponible."""
+    perfil = perfil_de_lector(request)
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    activos = perfil.prestamos.filter(estado=Prestamo.ACTIVO)
+    pendientes = perfil.solicitudes.filter(estado=Solicitud.PENDIENTE)
+    try:
+        validar_solicitud(
+            {
+                "prestamos_activos": activos.count(),
+                "solicitudes_pendientes": pendientes.count(),
+                "libros_prestados": set(activos.values_list("libro_id", flat=True)),
+                "libros_solicitados": set(pendientes.values_list("libro_id", flat=True)),
+            },
+            {"id": libro.pk, "disponibles": libro.disponibles},
+        )
+    except SolicitudNoPermitida as error:
+        messages.error(request, str(error))
+    else:
+        Solicitud.objects.create(lector=perfil, libro=libro)
+        messages.success(
+            request,
+            f"Solicitud enviada: «{libro.titulo}». Cuando la biblioteca la entregue, "
+            "el préstamo aparecerá en «Mis préstamos».",
+        )
+    return redirect("detalle_libro", pk=libro.pk)
+
+
+@login_required
+@require_POST
+def cancelar_solicitud(request, pk):
+    """HU-17: el lector cancela una solicitud suya que sigue pendiente."""
+    perfil = perfil_de_lector(request)
+    solicitud = get_object_or_404(Solicitud, pk=pk, lector=perfil, estado=Solicitud.PENDIENTE)
+    solicitud.estado = Solicitud.CANCELADA
+    solicitud.atendida = timezone.now()
+    solicitud.save(update_fields=["estado", "atendida"])
+    messages.info(request, f"Cancelaste la solicitud de «{solicitud.libro.titulo}».")
+    return redirect("mis_prestamos")
+
+
+@solo_personal
+@require_POST
+def entregar_solicitud(request, pk):
+    """HU-17: el bibliotecario entrega el libro; se crea el préstamo con las reglas de HU-09."""
+    solicitud = get_object_or_404(
+        Solicitud.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Solicitud.PENDIENTE,
+    )
+    if not solicitud.libro.activo:
+        messages.error(request, f"No se pudo entregar «{solicitud.libro.titulo}»: el libro fue dado de baja. Rechaza la solicitud.")
+        return redirect("prestamos")
+    try:
+        with transaction.atomic():
+            prestamo = crear_prestamo(solicitud.lector, solicitud.libro)
+            solicitud.estado = Solicitud.ENTREGADA
+            solicitud.atendida = timezone.now()
+            solicitud.prestamo = prestamo
+            solicitud.save(update_fields=["estado", "atendida", "prestamo"])
+    except PrestamoNoPermitido as error:
+        messages.error(request, f"No se pudo entregar «{solicitud.libro.titulo}»: {error}.")
+    else:
+        messages.success(
+            request,
+            f"Entregado: «{solicitud.libro.titulo}» a {solicitud.lector.nombre}. "
+            f"Debe devolverlo el {prestamo.fecha_devolucion:%d/%m/%Y}.",
+        )
+    return redirect("prestamos")
+
+
+@solo_personal
+@require_POST
+def rechazar_solicitud(request, pk):
+    """HU-17: el bibliotecario rechaza una solicitud pendiente."""
+    solicitud = get_object_or_404(Solicitud.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Solicitud.PENDIENTE)
+    solicitud.estado = Solicitud.RECHAZADA
+    solicitud.atendida = timezone.now()
+    solicitud.save(update_fields=["estado", "atendida"])
+    messages.info(request, f"Rechazaste la solicitud de «{solicitud.libro.titulo}» de {solicitud.lector.nombre}.")
+    return redirect("prestamos")

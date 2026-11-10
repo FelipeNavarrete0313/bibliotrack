@@ -5,12 +5,12 @@
 {% if perfil %}<p class="ayuda">Rol: {{ perfil.get_rol_display }}</p>{% endif %}
 
 <div class="opciones">
-  <a href="{% url 'catalogo' %}"><div class="tarjeta"><h2>Buscar libros</h2><p class="ayuda">Busca por título, autor o categoría y mira cuántos ejemplares hay.</p></div></a>
+  <a href="{% url 'catalogo' %}"><div class="tarjeta"><h2>Buscar libros</h2><p class="ayuda">Busca por título, autor o categoría, mira cuántos ejemplares hay{% if perfil.rol == 'lector' %} y solicita un préstamo{% endif %}.</p></div></a>
   {% if perfil.rol == 'lector' %}
   <a href="{% url 'mis_prestamos' %}"><div class="tarjeta"><h2>Mis préstamos</h2><p class="ayuda">Mira qué libros tienes, cuándo debes devolverlos y tu historial.</p></div></a>
   {% endif %}
   {% if perfil.es_personal %}
-  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Préstamos y devoluciones</h2><p class="ayuda">Presta un libro con el documento del lector, registra devoluciones y mira los préstamos activos.</p></div></a>
+  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Préstamos y devoluciones</h2><p class="ayuda">Entrega las solicitudes de los lectores, presta un libro con el documento del lector y registra devoluciones.</p>{% if pendientes %}<p class="aviso">{{ pendientes }} solicitud(es) pendiente(s)</p>{% endif %}</div></a>
   <a href="{% url 'registrar_libro' %}"><div class="tarjeta"><h2>Registrar un libro</h2><p class="ayuda">Agrega un título nuevo al catálogo con sus ejemplares.</p></div></a>
   {% endif %}
 </div>
