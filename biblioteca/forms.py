@@ -98,3 +98,31 @@ class PrestamoForm(forms.Form):
         if self.lector is None:
             raise forms.ValidationError("No hay ningún lector registrado con ese documento.")
         return documento
+
+
+class EditarLibroForm(forms.ModelForm):
+    """HU-08: editar un libro. El ISBN no se puede cambiar."""
+
+    class Meta:
+        model = Libro
+        fields = ["titulo", "autor", "categoria", "descripcion", "total_ejemplares"]
+        widgets = {"descripcion": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ejemplares que están prestados ahora; no cambian al editar.
+        self.prestados = self.instance.total_ejemplares - self.instance.disponibles
+
+    def clean_total_ejemplares(self):
+        total = self.cleaned_data["total_ejemplares"]
+        minimo = max(1, self.prestados)
+        if total < minimo:
+            raise forms.ValidationError(f"Debe haber al menos {minimo} ejemplar(es): hay {self.prestados} prestado(s).")
+        return total
+
+    def save(self, commit=True):
+        libro = super().save(commit=False)
+        libro.disponibles = libro.total_ejemplares - self.prestados
+        if commit:
+            libro.save()
+        return libro

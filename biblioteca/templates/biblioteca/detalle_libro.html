@@ -20,7 +20,11 @@
     </dd>
   </dl>
 </div>
-{% if user.perfil.es_personal and libro.disponibles %}
-<p><a class="boton" href="{% url 'prestamos' %}?libro={{ libro.pk }}">Registrar un préstamo de este libro</a></p>
+{% if user.perfil.es_personal %}
+<p>
+  {% if libro.disponibles %}<a class="boton" href="{% url 'prestamos' %}?libro={{ libro.pk }}">Registrar un préstamo de este libro</a>{% endif %}
+  <a class="boton boton-secundario" href="{% url 'editar_libro' libro.pk %}">Editar</a>
+  <a class="boton boton-secundario" href="{% url 'dar_de_baja' libro.pk %}">Dar de baja</a>
+</p>
 {% endif %}
 {% endblock %}

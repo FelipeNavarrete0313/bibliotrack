@@ -9,7 +9,7 @@ from bibliotrack.catalogo import buscar
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
 
 from . import seguridad
-from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
+from .forms import EditarLibroForm, InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
 from .models import Libro, Prestamo
 from .permisos import solo_personal
 
@@ -54,6 +54,34 @@ def registrar_libro(request):
         messages.success(request, f"«{libro.titulo}» quedó registrado en el catálogo.")
         return redirect("detalle_libro", pk=libro.pk)
     return render(request, "biblioteca/registrar_libro.html", {"form": form})
+
+
+@solo_personal
+def editar_libro(request, pk):
+    """HU-08: editar los datos de un libro, excepto el ISBN."""
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    form = EditarLibroForm(request.POST or None, instance=libro)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Los cambios del libro quedaron guardados.")
+        return redirect("detalle_libro", pk=libro.pk)
+    return render(request, "biblioteca/editar_libro.html", {"form": form, "libro": libro})
+
+
+@solo_personal
+def dar_de_baja(request, pk):
+    """HU-08: dar de baja un libro, con confirmación y sin préstamos activos."""
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    activos = libro.prestamos.filter(estado=Prestamo.ACTIVO).count()
+    if request.method == "POST":
+        if activos:
+            messages.error(request, f"No se puede dar de baja: tiene {activos} préstamo(s) activo(s).")
+            return redirect("detalle_libro", pk=libro.pk)
+        libro.activo = False
+        libro.save(update_fields=["activo"])
+        messages.success(request, f"«{libro.titulo}» se dio de baja. Su historial de préstamos se conserva.")
+        return redirect("catalogo")
+    return render(request, "biblioteca/dar_de_baja.html", {"libro": libro, "activos": activos})
 
 
 @solo_personal
