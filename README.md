@@ -25,12 +25,12 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 
 | Elemento | En GitHub | Cantidad |
 | --- | --- | --- |
-| Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 16 |
+| Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 17 |
 | Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 8 |
 | Bugs | Issues con `tipo: bug` | 3 |
 | Épicas | Etiquetas `épica: …` | 5 |
 | Sprints | Hitos (milestones) e iteraciones del Project | 3 |
-| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 88 puntos · 352 horas |
+| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 93 puntos · 372 horas |
 
 ## Documentación
 
@@ -69,14 +69,28 @@ Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presio
 | Página | Dirección | Quién la ve | Historia |
 | --- | --- | --- | --- |
 | Catálogo con buscador | `/` | Todos | HU-06, T-07 |
-| Detalle de un libro | `/libros/<id>/` | Todos | HU-07 |
+| Detalle de un libro (y «Solicitar préstamo» para lectores) | `/libros/<id>/` | Todos | HU-07, HU-17 |
 | Iniciar sesión | `/iniciar-sesion/` | Visitantes | HU-02 |
 | Crear una cuenta | `/registro/` | Visitantes | HU-01 |
 | Mi inicio | `/inicio/` | Con sesión | HU-02 |
 | Registrar un libro | `/libros/nuevo/` | Bibliotecario y administrador | HU-05 |
-| Préstamos | `/prestamos/` | Bibliotecario y administrador | HU-09 |
+| Mis préstamos: solicitudes, préstamos activos e historial | `/mis-prestamos/` | Lectores | HU-11, HU-17 |
+| Préstamos: solicitudes pendientes, préstamos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-17 |
 
 Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las páginas de BiblioTrack.
+
+### Cómo se presta un libro
+
+1. El **lector** inicia sesión, abre un libro disponible y pulsa **«Solicitar préstamo»** (HU-17).
+2. La **bibliotecaria** entra a **Préstamos**, ve la solicitud pendiente y pulsa **«Entregar»**. Se crea el préstamo a 15 días con las reglas de HU-09. También puede **«Rechazar»**.
+3. El lector ve su préstamo y la fecha de devolución en **Mis préstamos** (HU-11). Puede cancelar una solicitud mientras siga pendiente.
+4. Cuando devuelve el libro, la bibliotecaria pulsa **«Registrar devolución»** en Préstamos (HU-10). Si hay retraso, se muestran los días.
+
+La bibliotecaria también puede prestar directamente, sin solicitud, con el documento del lector.
+
+### Panel interno de Django (opcional)
+
+Para revisar la base de datos crea un superusuario con `py manage.py createsuperuser` (escribe también el correo) y entra a `http://127.0.0.1:8000/admin/` escribiendo la dirección. El superusuario no tiene rol en BiblioTrack; para usarlo en las páginas de la aplicación, créale un Perfil desde el panel.
 
 ### Usuarios de prueba
 
