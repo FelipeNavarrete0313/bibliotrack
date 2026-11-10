@@ -17,6 +17,7 @@
 | Sprint Backlog | Los issues del **hito** del sprint y la vista **Current iteration** del Project |
 | Incremento | Lo que está fusionado en la rama `main` |
 | Definición de terminado | [`definicion-de-terminado.md`](definicion-de-terminado.md) y la lista al final de cada historia |
+| Estimación | Campos **Estimate** y **Horas** del Project, y la sección «Estimación» de cada issue |
 
 ## Ceremonias
 
@@ -38,4 +39,8 @@ La columna **In progress** tiene un límite de 5 tarjetas (límite WIP) para no 
 
 ## Estimación
 
-Se usan puntos de historia con la escala 1, 2, 3, 5, 8. Una historia de más de 8 puntos se divide.
+Se estima con **Planning Poker** y la escala 1, 2, 3, 5, 8. Una historia de más de 8 puntos se divide. Como referencia de capacidad, **1 punto ≈ 4 horas**. El método, los ejemplos y la tabla completa están en [`estimacion.md`](estimacion.md).
+
+## Trazabilidad
+
+Cada historia se puede seguir hasta su código: issue → rama → commits → pull request → merge. La convención y la matriz están en [`trazabilidad.md`](trazabilidad.md).
