@@ -32,8 +32,9 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | HU-07 | [Ver el detalle y la disponibilidad de un libro](https://github.com/FelipeNavarrete0313/bibliotrack/issues/9) | Historia de usuario | E2 | Alta | 2 | 8 | Sprint 1 | Done |
 | BUG-02 | [El formulario de registro acepta correos sin formato válido](https://github.com/FelipeNavarrete0313/bibliotrack/issues/10) | Bug | E1 | Alta | 1 | 4 | Sprint 1 | Done |
 | HU-09 | [Registrar un préstamo](https://github.com/FelipeNavarrete0313/bibliotrack/issues/11) | Historia de usuario | E3 | Alta | 5 | 20 | Sprint 2 | Done |
-| HU-10 | [Registrar una devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/12) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | In progress |
-| HU-11 | [Consultar mis préstamos y fechas de devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/13) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | In progress |
+| HU-10 | [Registrar una devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/12) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | Done |
+| HU-11 | [Consultar mis préstamos y fechas de devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/13) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | Done |
+| HU-17 | [Solicitar un préstamo en línea](https://github.com/FelipeNavarrete0313/bibliotrack/issues/44) | Historia de usuario | E3 | Alta | 5 | 20 | Sprint 2 | Done |
 | HU-08 | [Editar o dar de baja un libro](https://github.com/FelipeNavarrete0313/bibliotrack/issues/14) | Historia de usuario | E2 | Media | 3 | 12 | Sprint 2 | In review |
 | T-05 | [Desplegar la aplicación en un ambiente de pruebas](https://github.com/FelipeNavarrete0313/bibliotrack/issues/15) | Tarea técnica | E3 | Media | 3 | 12 | Sprint 2 | Todo |
 | BUG-01 | [La búsqueda no encuentra libros cuando el título tiene tilde](https://github.com/FelipeNavarrete0313/bibliotrack/issues/16) | Bug | E2 | Alta | 2 | 8 | Sprint 2 | Done |
@@ -53,7 +54,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | Sprint | Fechas | Puntos | Horas | Objetivo |
 | --- | --- | --- | --- | --- |
 | Sprint 1 | 19 oct – 1 nov | 30 | 120 | Un lector puede registrarse, iniciar sesión y consultar el catálogo |
-| Sprint 2 | 2 nov – 15 nov | 22 | 88 | El bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
+| Sprint 2 | 2 nov – 15 nov | 27 | 108 | El lector solicita libros en línea, el bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
 | Sprint 3 | 16 nov – 29 nov | 26 | 104 | Reservas, renovaciones, notificaciones y administración de roles |
 | Sin asignar | — | 10 | 40 | Reportes y multas, si queda capacidad |
 
