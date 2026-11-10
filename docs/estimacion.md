@@ -83,6 +83,7 @@ Los votos son de un equipo de ejemplo de cuatro desarrolladores (Dev A a Dev D).
 | HU-10 | Registrar una devolución | S2 | 3 | 12 | Inverso del préstamo con cálculo de retraso; reutiliza lo aprendido en HU-09. |
 | HU-11 | Consultar mis préstamos y fechas de devolución | S2 | 3 | 12 | Consulta con dos reglas de color y un historial. Sin escritura de datos. |
 | HU-17 | Solicitar un préstamo en línea | S2 | 5 | 20 | Nuevo modelo con migración, dos actores (lector y bibliotecario) y reutiliza las reglas de HU-09. Tamaño parecido a HU-09. |
+| BUG-04 | Al entregar una solicitud desde el panel Admin no se crea el préstamo ni se descuenta el ejemplar | S2 | 2 | 8 | Causa clara: el panel Admin guarda el campo sin pasar por las reglas. Se mueven las reglas a un servicio común y se usan también en el Admin. |
 | HU-08 | Editar o dar de baja un libro | S2 | 3 | 12 | Edición con una regla (ISBN fijo) y baja lógica con confirmación y una restricción. |
 | T-05 | Desplegar la aplicación en un ambiente de pruebas | S2 | 3 | 12 | Servicio de hosting nuevo para el equipo: incertidumbre en la configuración. |
 | BUG-01 | La búsqueda no encuentra libros cuando el título tiene tilde | S2 | 2 | 8 | Causa clara (comparación sin normalizar) y arreglo localizado en una función. |
@@ -100,7 +101,7 @@ Los votos son de un equipo de ejemplo de cuatro desarrolladores (Dev A a Dev D).
 | Sprint | Puntos | Horas |
 | --- | --- | --- |
 | Sprint 1 | 30 | 120 |
-| Sprint 2 | 27 | 108 |
+| Sprint 2 | 29 | 116 |
 | Sprint 3 | 26 | 104 |
 | Sin sprint | 10 | 40 |
-| **Total** | **93** | **372** |
+| **Total** | **95** | **380** |

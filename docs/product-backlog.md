@@ -35,6 +35,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | HU-10 | [Registrar una devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/12) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | Done |
 | HU-11 | [Consultar mis préstamos y fechas de devolución](https://github.com/FelipeNavarrete0313/bibliotrack/issues/13) | Historia de usuario | E3 | Alta | 3 | 12 | Sprint 2 | Done |
 | HU-17 | [Solicitar un préstamo en línea](https://github.com/FelipeNavarrete0313/bibliotrack/issues/44) | Historia de usuario | E3 | Alta | 5 | 20 | Sprint 2 | Done |
+| BUG-04 | [Al entregar una solicitud desde el panel Admin no se crea el préstamo ni se descuenta el ejemplar](https://github.com/FelipeNavarrete0313/bibliotrack/issues/47) | Bug | E3 | Alta | 2 | 8 | Sprint 2 | Done |
 | HU-08 | [Editar o dar de baja un libro](https://github.com/FelipeNavarrete0313/bibliotrack/issues/14) | Historia de usuario | E2 | Media | 3 | 12 | Sprint 2 | In review |
 | T-05 | [Desplegar la aplicación en un ambiente de pruebas](https://github.com/FelipeNavarrete0313/bibliotrack/issues/15) | Tarea técnica | E3 | Media | 3 | 12 | Sprint 2 | Todo |
 | BUG-01 | [La búsqueda no encuentra libros cuando el título tiene tilde](https://github.com/FelipeNavarrete0313/bibliotrack/issues/16) | Bug | E2 | Alta | 2 | 8 | Sprint 2 | Done |
@@ -54,7 +55,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | Sprint | Fechas | Puntos | Horas | Objetivo |
 | --- | --- | --- | --- | --- |
 | Sprint 1 | 19 oct – 1 nov | 30 | 120 | Un lector puede registrarse, iniciar sesión y consultar el catálogo |
-| Sprint 2 | 2 nov – 15 nov | 27 | 108 | El lector solicita libros en línea, el bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
+| Sprint 2 | 2 nov – 15 nov | 29 | 116 | El lector solicita libros en línea, el bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
 | Sprint 3 | 16 nov – 29 nov | 26 | 104 | Reservas, renovaciones, notificaciones y administración de roles |
 | Sin asignar | — | 10 | 40 | Reportes y multas, si queda capacidad |
 
