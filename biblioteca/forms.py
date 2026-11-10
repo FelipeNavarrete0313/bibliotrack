@@ -80,3 +80,21 @@ class LibroForm(forms.ModelForm):
         if commit:
             libro.save()
         return libro
+
+
+class PrestamoForm(forms.Form):
+    """HU-09: registrar un préstamo."""
+
+    documento = forms.CharField(label="Documento del lector", max_length=20)
+    libro = forms.ModelChoiceField(label="Libro", queryset=Libro.objects.filter(activo=True), empty_label="Elige un libro")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["libro"].label_from_instance = lambda libro: f"{libro.titulo} · ISBN {libro.isbn}"
+
+    def clean_documento(self):
+        documento = self.cleaned_data["documento"].strip()
+        self.lector = Perfil.objects.filter(documento=documento, rol=Perfil.LECTOR).select_related("usuario").first()
+        if self.lector is None:
+            raise forms.ValidationError("No hay ningún lector registrado con ese documento.")
+        return documento

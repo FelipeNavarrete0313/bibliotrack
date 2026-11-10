@@ -20,4 +20,7 @@
     </dd>
   </dl>
 </div>
+{% if user.perfil.es_personal and libro.disponibles %}
+<p><a class="boton" href="{% url 'prestamos' %}?libro={{ libro.pk }}">Registrar un préstamo de este libro</a></p>
+{% endif %}
 {% endblock %}
