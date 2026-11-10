@@ -16,6 +16,9 @@
         <a href="{% url 'inicio' %}" {% if pagina == 'inicio' %}class="activo"{% endif %}>Mi inicio</a>
         {% endif %}
         <a href="{% url 'catalogo' %}" {% if pagina == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
+        {% if perfil.rol == 'lector' %}
+        <a href="{% url 'mis_prestamos' %}" {% if pagina == 'mis_prestamos' %}class="activo"{% endif %}>Mis préstamos</a>
+        {% endif %}
         {% if perfil.es_personal %}
         <a href="{% url 'prestamos' %}" {% if pagina == 'prestamos' %}class="activo"{% endif %}>Préstamos</a>
         <a href="{% url 'registrar_libro' %}" {% if pagina == 'registrar_libro' %}class="activo"{% endif %}>Registrar libro</a>

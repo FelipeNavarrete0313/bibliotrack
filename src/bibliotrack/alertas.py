@@ -1,4 +1,4 @@
-"""Estado de un préstamo para resaltarlo en «Mis préstamos» (HU-11, en progreso)."""
+"""Estado de un préstamo para resaltarlo en «Mis préstamos» (HU-11)."""
 
 VENCIDO = "vencido"
 POR_VENCER = "por_vencer"

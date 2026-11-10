@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
 from bibliotrack.catalogo import buscar
 from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
@@ -165,3 +166,25 @@ def inicio(request):
     """HU-02: página de inicio según el rol del usuario."""
     perfil = getattr(request.user, "perfil", None)
     return render(request, "biblioteca/inicio.html", {"perfil": perfil})
+
+
+@login_required
+def mis_prestamos(request):
+    """HU-11: el lector consulta sus préstamos activos, con alertas, y su historial."""
+    perfil = getattr(request.user, "perfil", None)
+    if perfil is None:
+        return render(request, "biblioteca/mis_prestamos.html", {"sin_perfil": True})
+    hoy = timezone.localdate()
+    activos = []
+    for prestamo in perfil.prestamos.filter(estado=Prestamo.ACTIVO).select_related("libro"):
+        estado = estado_del_prestamo(prestamo.fecha_devolucion, hoy)
+        dias = (prestamo.fecha_devolucion - hoy).days
+        if estado == VENCIDO:
+            aviso = f"Vencido hace {-dias} día(s)"
+        elif estado == POR_VENCER:
+            aviso = "Vence hoy" if dias == 0 else f"Vence en {dias} día(s)"
+        else:
+            aviso = "Al día"
+        activos.append({"prestamo": prestamo, "estado": estado, "aviso": aviso})
+    historial = perfil.prestamos.filter(estado=Prestamo.DEVUELTO).select_related("libro").order_by("-fecha_entrega")
+    return render(request, "biblioteca/mis_prestamos.html", {"activos": activos, "historial": historial})
