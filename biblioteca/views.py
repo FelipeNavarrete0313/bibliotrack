@@ -1,13 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from bibliotrack.catalogo import buscar
+from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
 
 from . import seguridad
-from .forms import InicioSesionForm, LibroForm, RegistroForm
+from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
 from .models import Libro, Prestamo
 from .permisos import solo_personal
 
@@ -52,6 +54,37 @@ def registrar_libro(request):
         messages.success(request, f"«{libro.titulo}» quedó registrado en el catálogo.")
         return redirect("detalle_libro", pk=libro.pk)
     return render(request, "biblioteca/registrar_libro.html", {"form": form})
+
+
+@solo_personal
+def prestamos(request):
+    """HU-09: registrar un préstamo (solo personal) y ver los préstamos activos."""
+    form = PrestamoForm(request.POST or None, initial={"libro": request.GET.get("libro")})
+    if request.method == "POST" and form.is_valid():
+        lector, libro = form.lector, form.cleaned_data["libro"]
+        datos_libro = libro.como_dict()
+        try:
+            prestamo = registrar_prestamo(
+                {"documento": lector.documento, "prestamos_activos": lector.prestamos_activos}, datos_libro,
+            )
+        except PrestamoNoPermitido as error:
+            messages.error(request, str(error))
+        else:
+            with transaction.atomic():
+                libro.disponibles = datos_libro["disponibles"]
+                libro.save(update_fields=["disponibles"])
+                Prestamo.objects.create(
+                    lector=lector, libro=libro,
+                    fecha_prestamo=prestamo["fecha_prestamo"], fecha_devolucion=prestamo["fecha_devolucion"],
+                )
+            messages.success(
+                request,
+                f"Préstamo registrado: «{libro.titulo}» para {lector.nombre}. "
+                f"Debe devolverlo el {prestamo['fecha_devolucion']:%d/%m/%Y}.",
+            )
+            return redirect("prestamos")
+    activos = Prestamo.objects.filter(estado=Prestamo.ACTIVO).select_related("lector__usuario", "libro")
+    return render(request, "biblioteca/prestamos.html", {"form": form, "activos": activos})
 
 
 def iniciar_sesion(request):

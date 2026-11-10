@@ -17,6 +17,7 @@
         {% endif %}
         <a href="{% url 'catalogo' %}" {% if pagina == 'catalogo' %}class="activo"{% endif %}>Catálogo</a>
         {% if perfil.es_personal %}
+        <a href="{% url 'prestamos' %}" {% if pagina == 'prestamos' %}class="activo"{% endif %}>Préstamos</a>
         <a href="{% url 'registrar_libro' %}" {% if pagina == 'registrar_libro' %}class="activo"{% endif %}>Registrar libro</a>
         {% endif %}
       </nav>
