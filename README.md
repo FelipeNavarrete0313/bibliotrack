@@ -26,11 +26,11 @@ Que la biblioteca gestione su catálogo, sus usuarios y sus préstamos en línea
 | Elemento | En GitHub | Cantidad |
 | --- | --- | --- |
 | Historias de usuario | Issues con la etiqueta `tipo: historia de usuario` | 17 |
-| Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 8 |
-| Bugs | Issues con `tipo: bug` | 4 |
+| Tareas técnicas y documentación | Issues con `tipo: tarea` o `tipo: documentación` | 12 |
+| Bugs | Issues con `tipo: bug` | 8 |
 | Épicas | Etiquetas `épica: …` | 5 |
 | Sprints | Hitos (milestones) e iteraciones del Project | 3 |
-| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 95 puntos · 380 horas |
+| Estimación | Campos **Estimate** (puntos) y **Horas** del Project | 112 puntos · 448 horas |
 
 ## Documentación
 
@@ -87,6 +87,8 @@ Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las página
 4. Cuando devuelve el libro, la bibliotecaria pulsa **«Registrar devolución»** en Préstamos (HU-10). Si hay retraso, se muestran los días.
 
 La bibliotecaria también puede prestar directamente, sin solicitud, con el documento del lector.
+
+Si dos personas atienden la misma solicitud o el mismo préstamo al mismo tiempo (por ejemplo, con un doble clic), solo cuenta la primera; la segunda ve un aviso (BUG-05).
 
 ### Panel interno de Django (opcional)
 
