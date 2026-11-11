@@ -1,0 +1,18 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Cambiar la contraseña{% endblock %}
+{% block contenido %}
+<p><a href="{% url 'inicio' %}">← Volver a mi inicio</a></p>
+<h1>Cambiar la contraseña</h1>
+<form class="tarjeta angosta" method="post" action="{% url 'cambiar_contrasena' %}">
+  {% csrf_token %}
+  {% for campo in form %}
+  <div class="form-fila">
+    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}
+    {% if campo.help_text %}<span class="ayuda">{{ campo.help_text }}</span>{% endif %}
+    {{ campo.errors }}
+  </div>
+  {% endfor %}
+  <button type="submit">Cambiar contraseña</button>
+</form>
+{% endblock %}

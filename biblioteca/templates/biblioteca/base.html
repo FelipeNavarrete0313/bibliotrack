@@ -26,7 +26,7 @@
       </nav>
       <div class="cuenta">
         {% if user.is_authenticated %}
-          <span>{{ user.get_full_name|default:user.email }}</span>
+          <a href="{% url 'cambiar_contrasena' %}" title="Cambiar mi contraseña" {% if pagina == 'cambiar_contrasena' %}class="activo"{% endif %}>{{ user.get_full_name|default:user.email }}</a>
           <form method="post" action="{% url 'cerrar_sesion' %}">{% csrf_token %}<button type="submit">Cerrar sesión</button></form>
         {% else %}
           <a href="{% url 'iniciar_sesion' %}" {% if pagina == 'iniciar_sesion' %}class="activo"{% endif %}>Iniciar sesión</a>

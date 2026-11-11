@@ -1,0 +1,16 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Recuperar la contraseña{% endblock %}
+{% block contenido %}
+<h1>Recuperar la contraseña</h1>
+<form class="tarjeta angosta" method="post" action="{% url 'recuperar_contrasena' %}">
+  {% csrf_token %}
+  <p>Escribe el correo de tu cuenta. Te enviaremos un enlace para crear una contraseña nueva.</p>
+  <div class="form-fila">
+    <label for="{{ form.email.id_for_label }}">Correo</label>
+    {{ form.email }}
+    {{ form.email.errors }}
+  </div>
+  <button type="submit">Enviar enlace</button>
+  <p class="ayuda"><a href="{% url 'iniciar_sesion' %}">Volver a iniciar sesión</a></p>
+</form>
+{% endblock %}

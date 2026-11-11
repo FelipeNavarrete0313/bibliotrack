@@ -1,10 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import views as vistas_auth
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -137,6 +140,10 @@ def iniciar_sesion(request):
     """HU-02: inicio de sesión con correo, error genérico y bloqueo por intentos fallidos."""
     if request.user.is_authenticated:
         return redirect("inicio")
+    # Si venía de una página que pide sesión, vuelve a ella después de entrar (solo rutas de este sitio).
+    destino = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        destino = ""
     form = InicioSesionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         correo = form.cleaned_data["correo"].strip()
@@ -150,10 +157,43 @@ def iniciar_sesion(request):
             if usuario:
                 seguridad.limpiar_fallos(correo)
                 login(request, usuario)
-                return redirect("inicio")
+                return redirect(destino or "inicio")
             seguridad.registrar_fallo(correo)
             messages.error(request, MENSAJE_BLOQUEO if seguridad.esta_bloqueado(correo) else MENSAJE_CREDENCIALES)
-    return render(request, "biblioteca/iniciar_sesion.html", {"form": form})
+    return render(request, "biblioteca/iniciar_sesion.html", {"form": form, "destino": destino})
+
+
+class RecuperarContrasena(vistas_auth.PasswordResetView):
+    """HU-03: el usuario escribe su correo y recibe un enlace. El mensaje es el mismo exista o no la cuenta."""
+
+    template_name = "biblioteca/recuperar_contrasena.html"
+    email_template_name = "biblioteca/correos/recuperar_contrasena.txt"
+    subject_template_name = "biblioteca/correos/recuperar_contrasena_asunto.txt"
+    success_url = reverse_lazy("recuperar_contrasena_enviado")
+
+
+class RestablecerContrasena(vistas_auth.PasswordResetConfirmView):
+    """HU-03: el enlace del correo (30 minutos, un solo uso) lleva a escribir la contraseña nueva."""
+
+    template_name = "biblioteca/restablecer_contrasena.html"
+    success_url = reverse_lazy("iniciar_sesion")
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        seguridad.desbloquear(form.user.email)
+        messages.success(self.request, "Tu contraseña fue cambiada. Ya puedes iniciar sesión.")
+        return respuesta
+
+
+class CambiarContrasena(vistas_auth.PasswordChangeView):
+    """El usuario con sesión cambia su contraseña escribiendo la actual."""
+
+    template_name = "biblioteca/cambiar_contrasena.html"
+    success_url = reverse_lazy("inicio")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tu contraseña fue cambiada.")
+        return super().form_valid(form)
 
 
 def registro(request):

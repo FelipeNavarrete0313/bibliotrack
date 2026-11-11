@@ -10,6 +10,11 @@ urlpatterns = [
     path("prestamos/<int:pk>/devolver/", views.registrar_devolucion, name="registrar_devolucion"),
     path("iniciar-sesion/", views.iniciar_sesion, name="iniciar_sesion"),
     path("registro/", views.registro, name="registro"),
+    path("recuperar-contrasena/", views.RecuperarContrasena.as_view(), name="recuperar_contrasena"),
+    path("recuperar-contrasena/enviado/", views.vistas_auth.PasswordResetDoneView.as_view(
+        template_name="biblioteca/recuperar_contrasena_enviado.html"), name="recuperar_contrasena_enviado"),
+    path("restablecer/<uidb64>/<token>/", views.RestablecerContrasena.as_view(), name="restablecer_contrasena"),
+    path("mi-cuenta/contrasena/", views.CambiarContrasena.as_view(), name="cambiar_contrasena"),
     path("cerrar-sesion/", views.cerrar_sesion, name="cerrar_sesion"),
     path("inicio/", views.inicio, name="inicio"),
     path("mis-prestamos/", views.mis_prestamos, name="mis_prestamos"),

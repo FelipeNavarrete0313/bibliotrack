@@ -22,11 +22,13 @@ class RegistroForm(forms.Form):
     correo = forms.EmailField(label="Correo", max_length=254, widget=forms.EmailInput(attrs={"autocomplete": "email"}),
                               error_messages={"invalid": "Escribe un correo válido, por ejemplo nombre@dominio.com."})
     contrasena = forms.CharField(label="Contraseña", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
-                                 help_text="Mínimo 8 caracteres.")
+                                 help_text="Mínimo 8 caracteres. No puede ser solo números ni una contraseña muy común.")
     confirmacion = forms.CharField(label="Confirma la contraseña", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
 
     def clean_documento(self):
         documento = self.cleaned_data["documento"].strip()
+        if not (documento.isdigit() and 4 <= len(documento) <= 12):
+            raise forms.ValidationError("El documento solo puede tener números (de 4 a 12 dígitos).")
         if Perfil.objects.filter(documento=documento).exists():
             raise forms.ValidationError("Ya existe una cuenta con este documento.")
         return documento
@@ -43,8 +45,12 @@ class RegistroForm(forms.Form):
         if contrasena:
             try:
                 validate_password(contrasena)
-            except forms.ValidationError:
-                self.add_error("contrasena", "La contraseña debe tener mínimo 8 caracteres.")
+            except forms.ValidationError as error:
+                for detalle in error.error_list:
+                    if detalle.code == "password_too_short":
+                        self.add_error("contrasena", "La contraseña debe tener mínimo 8 caracteres.")
+                    else:  # demasiado común o solo números
+                        self.add_error("contrasena", detalle)
         if contrasena and confirmacion and contrasena != confirmacion:
             self.add_error("confirmacion", "Las contraseñas no coinciden.")
         return datos
