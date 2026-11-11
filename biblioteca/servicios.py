@@ -9,8 +9,9 @@ from django.utils import timezone
 
 from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
+from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
 
-from .models import Libro, Prestamo, Solicitud
+from .models import Libro, Prestamo, Reserva, Solicitud
 
 
 def crear_prestamo(lector, libro):
@@ -96,6 +97,34 @@ def dar_de_baja(libro):
                 pass
     libro.activo = False
     return rechazadas
+
+
+def reservas_de_otros(prestamo):
+    """Reservas activas del libro hechas por otros lectores (HU-12)."""
+    return Reserva.objects.filter(libro_id=prestamo.libro_id, estado=Reserva.ACTIVA).exclude(lector_id=prestamo.lector_id).count()
+
+
+def renovar_prestamo(prestamo, hoy=None):
+    """HU-12: renueva un préstamo activo por 7 días, una sola vez. Devuelve la nueva fecha.
+
+    Lanza RenovacionNoPermitida (que es un PrestamoNoPermitido) si no se puede.
+    Las reglas se revisan con el préstamo recién leído y el cambio se hace con un
+    UPDATE condicionado, para que un doble clic no renueve dos veces (como en BUG-05).
+    """
+    hoy = hoy or timezone.localdate()
+    with transaction.atomic():
+        actual = Prestamo.objects.get(pk=prestamo.pk)
+        nueva = renovar(
+            {"estado": actual.estado, "fecha_devolucion": actual.fecha_devolucion, "renovado": actual.renovado},
+            hoy, reservas_de_otros(actual),
+        )
+        cambiados = Prestamo.objects.filter(pk=actual.pk, estado=Prestamo.ACTIVO, renovado=False).update(
+            renovado=True, fecha_devolucion=nueva,
+        )
+        if not cambiados:
+            raise RenovacionNoPermitida("Este préstamo ya se renovó una vez")
+    prestamo.renovado, prestamo.fecha_devolucion = True, nueva
+    return nueva
 
 
 def borrar_prestamo(prestamo):

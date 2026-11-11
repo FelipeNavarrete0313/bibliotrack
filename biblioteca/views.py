@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
 from bibliotrack.catalogo import buscar
 from bibliotrack.prestamos import PrestamoNoPermitido
+from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
@@ -219,12 +220,39 @@ def mis_prestamos(request):
             aviso = "Vence hoy" if dias == 0 else f"Vence en {dias} día(s)"
         else:
             aviso = "Al día"
-        activos.append({"prestamo": prestamo, "estado": estado, "aviso": aviso})
+        # HU-12: el botón «Renovar» solo aparece si las reglas lo permiten.
+        nota = "Ya renovado" if prestamo.renovado else ""
+        try:
+            renovar(
+                {"estado": prestamo.estado, "fecha_devolucion": prestamo.fecha_devolucion, "renovado": prestamo.renovado},
+                hoy, servicios.reservas_de_otros(prestamo),
+            )
+            puede_renovar = True
+        except RenovacionNoPermitida:
+            puede_renovar = False
+            if not nota and estado != VENCIDO:
+                nota = "Reservado por otro lector"
+        activos.append({"prestamo": prestamo, "estado": estado, "aviso": aviso, "puede_renovar": puede_renovar, "nota": nota})
     historial = perfil.prestamos.filter(estado=Prestamo.DEVUELTO).select_related("libro").order_by("-fecha_entrega")
     solicitudes = perfil.solicitudes.select_related("libro").order_by("-creada")[:10]
     return render(request, "biblioteca/mis_prestamos.html", {
         "activos": activos, "historial": historial, "solicitudes": solicitudes,
     })
+
+
+@login_required
+@require_POST
+def renovar_prestamo(request, pk):
+    """HU-12: el lector renueva un préstamo suyo, una sola vez y por 7 días."""
+    perfil = perfil_de_lector(request)
+    prestamo = get_object_or_404(Prestamo.objects.select_related("libro"), pk=pk, lector=perfil, estado=Prestamo.ACTIVO)
+    try:
+        nueva = servicios.renovar_prestamo(prestamo)
+    except PrestamoNoPermitido as error:
+        messages.error(request, f"No se pudo renovar «{prestamo.libro.titulo}»: {error}.")
+    else:
+        messages.success(request, f"Renovaste «{prestamo.libro.titulo}». Nueva fecha de devolución: {nueva:%d/%m/%Y}.")
+    return redirect("mis_prestamos")
 
 
 def perfil_de_lector(request):

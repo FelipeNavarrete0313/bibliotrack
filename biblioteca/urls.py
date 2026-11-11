@@ -15,6 +15,7 @@ urlpatterns = [
     path("cerrar-sesion/", views.cerrar_sesion, name="cerrar_sesion"),
     path("inicio/", views.inicio, name="inicio"),
     path("mis-prestamos/", views.mis_prestamos, name="mis_prestamos"),
+    path("mis-prestamos/<int:pk>/renovar/", views.renovar_prestamo, name="renovar_prestamo"),
     path("libros/<int:pk>/solicitar/", views.solicitar_prestamo, name="solicitar_prestamo"),
     path("solicitudes/<int:pk>/cancelar/", views.cancelar_solicitud, name="cancelar_solicitud"),
     path("solicitudes/<int:pk>/entregar/", views.entregar_solicitud, name="entregar_solicitud"),
