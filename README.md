@@ -80,6 +80,7 @@ Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presio
 | Cambiar mi contraseña (clic en tu nombre) | `/mi-cuenta/contrasena/` | Con sesión | HU-03 |
 | Mi inicio, con el resumen del día para el personal | `/inicio/` | Con sesión | HU-02 |
 | Registrar un libro | `/libros/nuevo/` | Bibliotecario y administrador | HU-05 |
+| Editar o dar de baja un libro | `/libros/<id>/editar/` y `/libros/<id>/baja/` | Bibliotecario y administrador | HU-08 |
 | Mis préstamos: solicitudes, reservas, préstamos activos (con «Renovar») e historial | `/mis-prestamos/` | Lectores | HU-11, HU-12, HU-13, HU-17 |
 | Préstamos: solicitudes pendientes, reservas listas, préstamos, vencidos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-13, HU-17 |
 | Multas pendientes y registro del pago | `/multas/` | Bibliotecario y administrador | HU-16 |

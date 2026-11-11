@@ -27,7 +27,7 @@ from bibliotrack.roles import CambioDeRolNoPermitido
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
-from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
+from .forms import EditarLibroForm, InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
 from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
 from .permisos import solo_administrador, solo_personal
 
@@ -90,6 +90,37 @@ def registrar_libro(request):
         messages.success(request, f"«{libro.titulo}» quedó registrado en el catálogo.")
         return redirect("detalle_libro", pk=libro.pk)
     return render(request, "biblioteca/registrar_libro.html", {"form": form})
+
+
+@solo_personal
+def editar_libro(request, pk):
+    """HU-08: editar los datos de un libro, excepto el ISBN."""
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    form = EditarLibroForm(request.POST or None, instance=libro)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Los cambios del libro quedaron guardados.")
+        return redirect("detalle_libro", pk=libro.pk)
+    return render(request, "biblioteca/editar_libro.html", {"form": form, "libro": libro})
+
+
+@solo_personal
+def dar_de_baja(request, pk):
+    """HU-08: dar de baja un libro, con confirmación y sin préstamos activos."""
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    activos = libro.prestamos.filter(estado=Prestamo.ACTIVO).count()
+    pendientes = libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
+    if request.method == "POST":
+        if activos:
+            messages.error(request, f"No se puede dar de baja: tiene {activos} préstamo(s) activo(s).")
+            return redirect("detalle_libro", pk=libro.pk)
+        rechazadas = servicios.dar_de_baja(libro)
+        texto = f"«{libro.titulo}» se dio de baja. Su historial de préstamos se conserva."
+        if rechazadas:
+            texto += f" Se rechazó {rechazadas} solicitud pendiente." if rechazadas == 1 else f" Se rechazaron {rechazadas} solicitudes pendientes."
+        messages.success(request, texto)
+        return redirect("catalogo")
+    return render(request, "biblioteca/dar_de_baja.html", {"libro": libro, "activos": activos, "pendientes": pendientes})
 
 
 @solo_personal

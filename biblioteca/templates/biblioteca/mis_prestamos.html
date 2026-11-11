@@ -20,7 +20,7 @@
   <tr><th>Libro</th><th>Solicitada</th><th>Estado</th><th></th></tr>
   {% for s in solicitudes %}
   <tr>
-    <td><a href="{% url 'detalle_libro' s.libro.pk %}">{{ s.libro.titulo }}</a></td>
+    <td>{% if s.libro.activo %}<a href="{% url 'detalle_libro' s.libro.pk %}">{{ s.libro.titulo }}</a>{% else %}{{ s.libro.titulo }} <span class="ayuda">(dado de baja)</span>{% endif %}</td>
     <td>{{ s.creada|date:"d/m/Y" }}</td>
     <td class="estado-{{ s.estado }}">{{ s.get_estado_display }}</td>
     <td>
