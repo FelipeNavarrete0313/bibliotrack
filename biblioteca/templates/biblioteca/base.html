@@ -25,6 +25,7 @@
         <a href="{% url 'registrar_libro' %}" {% if pagina == 'registrar_libro' %}class="activo"{% endif %}>Registrar libro</a>
         {% endif %}
         {% if perfil.rol == 'administrador' %}
+        <a href="{% url 'reporte_mas_prestados' %}" {% if pagina == 'reporte_mas_prestados' %}class="activo"{% endif %}>Reportes</a>
         <a href="{% url 'usuarios' %}" {% if pagina == 'usuarios' %}class="activo"{% endif %}>Usuarios</a>
         {% endif %}
       </nav>

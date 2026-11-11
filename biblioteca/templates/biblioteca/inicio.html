@@ -15,6 +15,7 @@
   <a href="{% url 'registrar_libro' %}"><div class="tarjeta"><h2>Registrar un libro</h2><p class="ayuda">Agrega un título nuevo al catálogo con sus ejemplares.</p></div></a>
   {% endif %}
   {% if perfil.rol == 'administrador' %}
+  <a href="{% url 'reporte_mas_prestados' %}"><div class="tarjeta"><h2>Libros más prestados</h2><p class="ayuda">Mira qué títulos se prestan más en un período y descarga el reporte en Excel.</p></div></a>
   <a href="{% url 'usuarios' %}"><div class="tarjeta"><h2>Usuarios y roles</h2><p class="ayuda">Busca un usuario y cámbiale el rol: lector, bibliotecario o administrador.</p></div></a>
   {% endif %}
 </div>

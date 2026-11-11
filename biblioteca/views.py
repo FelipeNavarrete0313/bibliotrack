@@ -1,4 +1,7 @@
 from django.conf import settings
+from datetime import date
+from io import BytesIO
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth import views as vistas_auth
@@ -6,7 +9,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme, urlencode
@@ -17,6 +21,7 @@ from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
 from bibliotrack.catalogo import buscar, normalizar
 from bibliotrack.prestamos import PrestamoNoPermitido
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
+from bibliotrack.reportes import mas_prestados
 from bibliotrack.reservas import ReservaNoPermitida
 from bibliotrack.roles import CambioDeRolNoPermitido
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
@@ -513,3 +518,59 @@ def pagar_multa(request, pk):
     else:
         messages.success(request, f"Pago registrado: {multa.en_pesos} de {multa.lector.nombre} por «{multa.prestamo.libro.titulo}».")
     return redirect("multas")
+
+
+def _fecha(texto, por_defecto):
+    try:
+        return date.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return por_defecto
+
+
+@solo_administrador
+def reporte_mas_prestados(request):
+    """HU-15: los 10 libros más prestados en un rango de fechas, con filtro por categoría y descarga en Excel."""
+    hoy = timezone.localdate()
+    desde = _fecha(request.GET.get("desde"), hoy.replace(day=1))
+    hasta = _fecha(request.GET.get("hasta"), hoy)
+    if desde > hasta:
+        desde, hasta = hasta, desde
+    categoria = request.GET.get("categoria", "")
+    prestamos_del_periodo = Prestamo.objects.filter(fecha_prestamo__range=(desde, hasta)).values(
+        "fecha_prestamo", isbn=F("libro__isbn"), titulo=F("libro__titulo"), autor=F("libro__autor"), categoria=F("libro__categoria"),
+    )
+    filas = mas_prestados(list(prestamos_del_periodo), desde, hasta, categoria or None)
+    if request.GET.get("formato") == "xlsx":
+        return _reporte_en_excel(filas, desde, hasta, categoria)
+    return render(request, "biblioteca/reporte_mas_prestados.html", {
+        "filas": filas, "desde": desde, "hasta": hasta, "categoria": categoria,
+        "categorias": Libro.objects.order_by("categoria").values_list("categoria", flat=True).distinct(),
+        "consulta": urlencode({"desde": desde.isoformat(), "hasta": hasta.isoformat(), "categoria": categoria}),
+        "total": sum(fila["prestamos"] for fila in filas),
+    })
+
+
+def _reporte_en_excel(filas, desde, hasta, categoria):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    libro_excel = Workbook()
+    hoja = libro_excel.active
+    hoja.title = "Más prestados"
+    hoja.append(["BiblioTrack · Libros más prestados"])
+    hoja.append([f"Del {desde:%d/%m/%Y} al {hasta:%d/%m/%Y}" + (f" · Categoría: {categoria}" if categoria else "")])
+    hoja.append([])
+    hoja.append(["Puesto", "Título", "Autor", "Categoría", "ISBN", "Préstamos"])
+    for puesto, fila in enumerate(filas, 1):
+        hoja.append([puesto, fila["titulo"], fila["autor"], fila["categoria"], fila["isbn"], fila["prestamos"]])
+    hoja["A1"].font = Font(bold=True, size=14)
+    for celda in hoja[4]:
+        celda.font = Font(bold=True)
+    for columna, ancho in zip("ABCDEF", (8, 45, 30, 18, 20, 12)):
+        hoja.column_dimensions[columna].width = ancho
+    archivo = BytesIO()
+    libro_excel.save(archivo)
+    respuesta = HttpResponse(archivo.getvalue(),
+                             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    respuesta["Content-Disposition"] = f'attachment; filename="mas-prestados-{desde:%Y%m%d}-{hasta:%Y%m%d}.xlsx"'
+    return respuesta
