@@ -30,17 +30,22 @@
 <h2>Préstamos activos</h2>
 {% if activos %}
 <table>
-  <tr><th>Libro</th><th>Prestado el</th><th>Devolver el</th><th>Estado</th></tr>
+  <tr><th>Libro</th><th>Prestado el</th><th>Devolver el</th><th>Estado</th><th>Renovación</th></tr>
   {% for fila in activos %}
   <tr class="{% if fila.estado == 'vencido' %}fila-vencido{% elif fila.estado == 'por_vencer' %}fila-por-vencer{% endif %}">
     <td><a href="{% url 'detalle_libro' fila.prestamo.libro.pk %}">{{ fila.prestamo.libro.titulo }}</a></td>
     <td>{{ fila.prestamo.fecha_prestamo|date:"d/m/Y" }}</td>
     <td>{{ fila.prestamo.fecha_devolucion|date:"d/m/Y" }}</td>
     <td class="{% if fila.estado == 'vencido' %}vencido{% elif fila.estado == 'por_vencer' %}por-vencer{% endif %}">{{ fila.aviso }}</td>
+    <td>
+      {% if fila.puede_renovar %}
+      <form method="post" action="{% url 'renovar_prestamo' fila.prestamo.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario" aria-label="Renovar {{ fila.prestamo.libro.titulo }}">Renovar</button></form>
+      {% else %}<span class="ayuda">{{ fila.nota|default:"—" }}</span>{% endif %}
+    </td>
   </tr>
   {% endfor %}
 </table>
-<p class="ayuda">En rojo, los préstamos vencidos; en amarillo, los que vencen en 3 días o menos. Devuelve el libro en el mostrador de la biblioteca.</p>
+<p class="ayuda">En rojo, los préstamos vencidos; en amarillo, los que vencen en 3 días o menos. Devuelve el libro en el mostrador de la biblioteca. Puedes renovar cada préstamo una vez, por 7 días, si no está vencido ni reservado por otro lector.</p>
 {% else %}
 <p class="vacio">No tienes préstamos activos.</p>
 {% endif %}

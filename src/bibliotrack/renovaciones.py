@@ -2,12 +2,12 @@
 
 from datetime import timedelta
 
-from bibliotrack.prestamos import DOMINGO
+from bibliotrack.prestamos import DOMINGO, PrestamoNoPermitido
 
 DIAS_DE_RENOVACION = 7
 
 
-class RenovacionNoPermitida(Exception):
+class RenovacionNoPermitida(PrestamoNoPermitido):
     """La renovación no cumple las reglas de la biblioteca."""
 
 
