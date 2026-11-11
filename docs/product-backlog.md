@@ -48,8 +48,8 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | HU-14 | [Recibir un aviso por correo antes del vencimiento](https://github.com/FelipeNavarrete0313/bibliotrack/issues/21) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Todo |
 | T-06 | [Escribir el manual de usuario y la documentación técnica](https://github.com/FelipeNavarrete0313/bibliotrack/issues/22) | Documentación | E5 | Media | 3 | 12 | Sprint 3 | Todo |
 | BUG-03 | [El historial de préstamos muestra las fechas en formato mes/día/año](https://github.com/FelipeNavarrete0313/bibliotrack/issues/23) | Bug | E3 | Baja | 2 | 8 | Sprint 3 | Todo |
-| BUG-06 | [Editar los ejemplares o borrar un préstamo en el panel Admin descuadra la disponibilidad](https://github.com/FelipeNavarrete0313/bibliotrack/issues/51) | Bug | E3 | Alta | 3 | 12 | Sprint 3 | Todo |
-| BUG-07 | [Varias solicitudes pendientes compiten por el mismo ejemplar](https://github.com/FelipeNavarrete0313/bibliotrack/issues/52) | Bug | E3 | Media | 2 | 8 | Sprint 3 | Todo |
+| BUG-06 | [Editar los ejemplares o borrar un préstamo en el panel Admin descuadra la disponibilidad](https://github.com/FelipeNavarrete0313/bibliotrack/issues/51) | Bug | E3 | Alta | 3 | 12 | Sprint 3 | Done |
+| BUG-07 | [Varias solicitudes pendientes compiten por el mismo ejemplar](https://github.com/FelipeNavarrete0313/bibliotrack/issues/52) | Bug | E3 | Media | 2 | 8 | Sprint 3 | Done |
 | HU-15 | [Reporte de los libros más prestados](https://github.com/FelipeNavarrete0313/bibliotrack/issues/24) | Historia de usuario | E5 | Baja | 5 | 20 | — | Todo |
 | HU-16 | [Calcular la multa por devolución tardía](https://github.com/FelipeNavarrete0313/bibliotrack/issues/25) | Historia de usuario | E5 | Baja | 5 | 20 | — | Todo |
 | T-09 | [Unificar las reglas de préstamo que el panel Admin repite](https://github.com/FelipeNavarrete0313/bibliotrack/issues/53) | Tarea técnica | E3 | Media | 2 | 8 | — | Todo |
