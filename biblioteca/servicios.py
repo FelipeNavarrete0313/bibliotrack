@@ -99,9 +99,17 @@ def dar_de_baja(libro):
 
 
 def borrar_prestamo(prestamo):
-    """Si se borra un préstamo activo (solo desde el Admin), el ejemplar vuelve al catálogo."""
+    """Si se borra un préstamo activo (solo desde el Admin), el ejemplar vuelve al catálogo.
+
+    BUG-06: si el préstamo vino de una solicitud, esa solicitud vuelve a «Pendiente»,
+    para que no quede «Entregada» sin préstamo. Un préstamo ya devuelto se borra sin
+    tocar su solicitud: el libro sí se entregó.
+    """
     with transaction.atomic():
         if prestamo.estado == Prestamo.ACTIVO:
+            Solicitud.objects.filter(prestamo=prestamo, estado=Solicitud.ENTREGADA).update(
+                estado=Solicitud.PENDIENTE, atendida=None, prestamo=None,
+            )
             libro = Libro.objects.select_for_update().get(pk=prestamo.libro_id)
             libro.disponibles = min(libro.disponibles + 1, libro.total_ejemplares)
             libro.save(update_fields=["disponibles"])
