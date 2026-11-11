@@ -43,7 +43,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | T-08 | [Documentar la estimación y la trazabilidad del proyecto](https://github.com/FelipeNavarrete0313/bibliotrack/issues/40) | Documentación | E5 | Alta | 3 | 12 | Sprint 2 | Done |
 | HU-03 | [Recuperar la contraseña](https://github.com/FelipeNavarrete0313/bibliotrack/issues/17) | Historia de usuario | E1 | Media | 3 | 12 | Sprint 3 | Todo |
 | HU-04 | [Administrar los roles de los usuarios](https://github.com/FelipeNavarrete0313/bibliotrack/issues/18) | Historia de usuario | E1 | Media | 5 | 20 | Sprint 3 | Todo |
-| HU-12 | [Renovar un préstamo](https://github.com/FelipeNavarrete0313/bibliotrack/issues/19) | Historia de usuario | E3 | Media | 3 | 12 | Sprint 3 | Todo |
+| HU-12 | [Renovar un préstamo](https://github.com/FelipeNavarrete0313/bibliotrack/issues/19) | Historia de usuario | E3 | Media | 3 | 12 | Sprint 3 | Done |
 | HU-13 | [Reservar un libro que no está disponible](https://github.com/FelipeNavarrete0313/bibliotrack/issues/20) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Todo |
 | HU-14 | [Recibir un aviso por correo antes del vencimiento](https://github.com/FelipeNavarrete0313/bibliotrack/issues/21) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Todo |
 | T-06 | [Escribir el manual de usuario y la documentación técnica](https://github.com/FelipeNavarrete0313/bibliotrack/issues/22) | Documentación | E5 | Media | 3 | 12 | Sprint 3 | Todo |

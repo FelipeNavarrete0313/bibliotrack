@@ -74,7 +74,7 @@ Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presio
 | Crear una cuenta | `/registro/` | Visitantes | HU-01 |
 | Mi inicio | `/inicio/` | Con sesión | HU-02 |
 | Registrar un libro | `/libros/nuevo/` | Bibliotecario y administrador | HU-05 |
-| Mis préstamos: solicitudes, préstamos activos e historial | `/mis-prestamos/` | Lectores | HU-11, HU-17 |
+| Mis préstamos: solicitudes, préstamos activos (con «Renovar») e historial | `/mis-prestamos/` | Lectores | HU-11, HU-12, HU-17 |
 | Préstamos: solicitudes pendientes, préstamos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-17 |
 
 Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las páginas de BiblioTrack.
@@ -83,7 +83,7 @@ Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las página
 
 1. El **lector** inicia sesión, abre un libro disponible y pulsa **«Solicitar préstamo»** (HU-17). Si los ejemplares libres ya están solicitados por otros lectores, el botón no aparece (BUG-07).
 2. La **bibliotecaria** entra a **Préstamos**, ve la solicitud pendiente y pulsa **«Entregar»**. Se crea el préstamo a 15 días con las reglas de HU-09. También puede **«Rechazar»**.
-3. El lector ve su préstamo y la fecha de devolución en **Mis préstamos** (HU-11). Puede cancelar una solicitud mientras siga pendiente.
+3. El lector ve su préstamo y la fecha de devolución en **Mis préstamos** (HU-11). Puede cancelar una solicitud mientras siga pendiente, y **renovar** un préstamo una vez, por 7 días, si no está vencido ni reservado por otro lector (HU-12).
 4. Cuando devuelve el libro, la bibliotecaria pulsa **«Registrar devolución»** en Préstamos (HU-10). Si hay retraso, se muestran los días.
 
 La bibliotecaria también puede prestar directamente, sin solicitud, con el documento del lector.
