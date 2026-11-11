@@ -308,6 +308,8 @@ def solicitar_prestamo(request, pk):
     with transaction.atomic():
         libro = get_object_or_404(Libro, pk=pk, activo=True)
         servicios.actualizar_reservas(libro)
+        ocupados = servicios.ejemplares_ocupados(libro, perfil)
+        guardados = servicios.guardados_para_otros(libro, perfil)
         try:
             validar_solicitud(
                 {
@@ -318,7 +320,8 @@ def solicitar_prestamo(request, pk):
                 },
                 {
                     "id": libro.pk, "disponibles": libro.disponibles,
-                    "solicitudes_pendientes": servicios.ejemplares_ocupados(libro, perfil),
+                    "solicitudes_pendientes": ocupados - guardados,
+                    "guardados_para_otros": guardados,
                 },
             )
         except SolicitudNoPermitida as error:

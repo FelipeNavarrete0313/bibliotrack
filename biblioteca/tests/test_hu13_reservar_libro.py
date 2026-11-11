@@ -113,7 +113,8 @@ def test_el_ejemplar_guardado_no_se_presta_ni_se_solicita_por_otro_lector(client
     detalle = client.get(reverse("detalle_libro", args=[agotado.pk])).content.decode()
     assert "Solicitar préstamo</button>" not in detalle
     assert "Los ejemplares disponibles están guardados para una reserva." in detalle
-    client.post(reverse("solicitar_prestamo", args=[agotado.pk]))
+    respuesta = client.post(reverse("solicitar_prestamo", args=[agotado.pk]), follow=True)
+    assert "Los ejemplares disponibles están guardados para una reserva." in respuesta.content.decode()
     assert not Solicitud.objects.exists()
     # Pero sí puede entrar a la cola detrás de ella.
     assert "quedaste en el puesto 2 de la cola" in reservar(client, agotado)

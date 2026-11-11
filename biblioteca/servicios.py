@@ -26,8 +26,7 @@ def crear_prestamo(lector, libro):
             raise PrestamoNoPermitido("El libro fue dado de baja")
         # HU-13: un ejemplar guardado para la reserva de otro lector no se presta.
         actualizar_reservas(libro)
-        guardados_para_otros = _guardadas(libro).exclude(lector=lector).count()
-        if libro.disponibles > 0 and ejemplares_libres(libro.disponibles, guardados_para_otros) == 0:
+        if libro.disponibles > 0 and ejemplares_libres(libro.disponibles, guardados_para_otros(libro, lector)) == 0:
             raise PrestamoNoPermitido("Los ejemplares disponibles están guardados para una reserva")
         datos_libro = libro.como_dict()
         prestamo = registrar_prestamo(
@@ -143,6 +142,11 @@ def borrar_prestamo(prestamo):
 def _guardadas(libro):
     """Reservas activas del libro que ya tienen un ejemplar guardado."""
     return Reserva.objects.filter(libro=libro, estado=Reserva.ACTIVA, guardada_hasta__isnull=False)
+
+
+def guardados_para_otros(libro, lector):
+    """Ejemplares del libro guardados para reservas de otros lectores."""
+    return _guardadas(libro).exclude(lector=lector).count()
 
 
 def ejemplares_ocupados(libro, lector=None):
