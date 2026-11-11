@@ -14,6 +14,8 @@ erDiagram
     PERFIL ||--o{ SOLICITUD : "solicita"
     LIBRO ||--o{ SOLICITUD : "se solicita en"
     SOLICITUD |o--o| PRESTAMO : "al entregarse crea"
+    PRESTAMO ||--o| MULTA : "si se devuelve tarde genera"
+    PERFIL ||--o{ MULTA : "debe"
 
     USUARIO {
         int id PK
@@ -48,7 +50,19 @@ erDiagram
         date fecha_devolucion
         date fecha_entrega "null mientras esté activo"
         bool renovado
+        date aviso_por_vencer "cuándo se envió el correo de 2 días antes"
+        date aviso_vencido "cuándo se envió el correo de vencido"
         string estado "activo o devuelto"
+    }
+    MULTA {
+        int id PK
+        int prestamo_id FK "una multa por préstamo"
+        int lector_id FK
+        int dias "días de retraso cobrados"
+        int valor "en pesos"
+        string estado "pendiente o pagada"
+        date creada
+        date pagada "null mientras esté pendiente"
     }
     RESERVA {
         int id PK
@@ -81,6 +95,8 @@ erDiagram
 | El préstamo guarda `fecha_devolucion` y `fecha_entrega` por separado | HU-10 necesita calcular los días de retraso. |
 | La `Solicitud` (HU-17) es una tabla aparte y no descuenta ejemplares | El lector pide el libro en línea, pero el ejemplar solo sale al entregarlo; ahí se crea el `Prestamo` con las reglas de HU-09. Se agregó en la migración `0002_solicitud`. |
 | La `Reserva` guarda `guardada_hasta` y no descuenta ejemplares (HU-13) | El ejemplar devuelto sigue contando como disponible, pero se aparta 48 horas para la primera reserva de la cola. El vencimiento se revisa al consultar las reservas, sin tarea programada |
+| La `Multa` (HU-16) guarda los días y el valor ya calculados | El valor por día es configurable; si cambia después, las multas ya creadas conservan el valor con el que se cobraron |
+| `Prestamo` guarda la fecha de cada aviso por correo (HU-14) | Así cada aviso sale una sola vez, aunque el envío diario se ejecute varias veces o se salte un día |
 
 ## Script SQL
 
@@ -90,6 +106,7 @@ Django crea las tablas con migraciones (`biblioteca/migrations/`). El SQL equiva
 py manage.py sqlmigrate biblioteca 0001
 py manage.py sqlmigrate biblioteca 0002
 py manage.py sqlmigrate biblioteca 0004
+py manage.py sqlmigrate biblioteca 0005
 ```
 
 ## Datos de prueba

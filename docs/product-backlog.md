@@ -41,22 +41,22 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | T-05 | [Desplegar la aplicación en un ambiente de pruebas](https://github.com/FelipeNavarrete0313/bibliotrack/issues/15) | Tarea técnica | E3 | Media | 3 | 12 | Sprint 2 | Todo |
 | BUG-01 | [La búsqueda no encuentra libros cuando el título tiene tilde](https://github.com/FelipeNavarrete0313/bibliotrack/issues/16) | Bug | E2 | Alta | 2 | 8 | Sprint 2 | Done |
 | T-08 | [Documentar la estimación y la trazabilidad del proyecto](https://github.com/FelipeNavarrete0313/bibliotrack/issues/40) | Documentación | E5 | Alta | 3 | 12 | Sprint 2 | Done |
-| HU-03 | [Recuperar la contraseña](https://github.com/FelipeNavarrete0313/bibliotrack/issues/17) | Historia de usuario | E1 | Media | 3 | 12 | Sprint 3 | Todo |
-| HU-04 | [Administrar los roles de los usuarios](https://github.com/FelipeNavarrete0313/bibliotrack/issues/18) | Historia de usuario | E1 | Media | 5 | 20 | Sprint 3 | Todo |
+| HU-03 | [Recuperar la contraseña](https://github.com/FelipeNavarrete0313/bibliotrack/issues/17) | Historia de usuario | E1 | Media | 3 | 12 | Sprint 3 | Done |
+| HU-04 | [Administrar los roles de los usuarios](https://github.com/FelipeNavarrete0313/bibliotrack/issues/18) | Historia de usuario | E1 | Media | 5 | 20 | Sprint 3 | Done |
 | HU-12 | [Renovar un préstamo](https://github.com/FelipeNavarrete0313/bibliotrack/issues/19) | Historia de usuario | E3 | Media | 3 | 12 | Sprint 3 | Done |
 | HU-13 | [Reservar un libro que no está disponible](https://github.com/FelipeNavarrete0313/bibliotrack/issues/20) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Done |
-| HU-14 | [Recibir un aviso por correo antes del vencimiento](https://github.com/FelipeNavarrete0313/bibliotrack/issues/21) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Todo |
+| HU-14 | [Recibir un aviso por correo antes del vencimiento](https://github.com/FelipeNavarrete0313/bibliotrack/issues/21) | Historia de usuario | E4 | Media | 5 | 20 | Sprint 3 | Done |
 | T-06 | [Escribir el manual de usuario y la documentación técnica](https://github.com/FelipeNavarrete0313/bibliotrack/issues/22) | Documentación | E5 | Media | 3 | 12 | Sprint 3 | Todo |
 | BUG-03 | [El historial de préstamos muestra las fechas en formato mes/día/año](https://github.com/FelipeNavarrete0313/bibliotrack/issues/23) | Bug | E3 | Baja | 2 | 8 | Sprint 3 | Todo |
 | BUG-06 | [Editar los ejemplares o borrar un préstamo en el panel Admin descuadra la disponibilidad](https://github.com/FelipeNavarrete0313/bibliotrack/issues/51) | Bug | E3 | Alta | 3 | 12 | Sprint 3 | Done |
 | BUG-07 | [Varias solicitudes pendientes compiten por el mismo ejemplar](https://github.com/FelipeNavarrete0313/bibliotrack/issues/52) | Bug | E3 | Media | 2 | 8 | Sprint 3 | Done |
-| HU-15 | [Reporte de los libros más prestados](https://github.com/FelipeNavarrete0313/bibliotrack/issues/24) | Historia de usuario | E5 | Baja | 5 | 20 | — | Todo |
-| HU-16 | [Calcular la multa por devolución tardía](https://github.com/FelipeNavarrete0313/bibliotrack/issues/25) | Historia de usuario | E5 | Baja | 5 | 20 | — | Todo |
+| HU-15 | [Reporte de los libros más prestados](https://github.com/FelipeNavarrete0313/bibliotrack/issues/24) | Historia de usuario | E5 | Baja | 5 | 20 | — | Done |
+| HU-16 | [Calcular la multa por devolución tardía](https://github.com/FelipeNavarrete0313/bibliotrack/issues/25) | Historia de usuario | E5 | Baja | 5 | 20 | — | Done |
 | T-09 | [Unificar las reglas de préstamo que el panel Admin repite](https://github.com/FelipeNavarrete0313/bibliotrack/issues/53) | Tarea técnica | E3 | Media | 2 | 8 | — | Todo |
 | T-10 | [Agregar linter y medición de cobertura al CI](https://github.com/FelipeNavarrete0313/bibliotrack/issues/54) | Tarea técnica | E5 | Media | 2 | 8 | — | Todo |
 | T-11 | [Mejorar la accesibilidad y los mensajes de las páginas](https://github.com/FelipeNavarrete0313/bibliotrack/issues/55) | Tarea técnica | E3 | Baja | 2 | 8 | — | Todo |
 | T-12 | [Paginar el catálogo, los préstamos activos y el historial](https://github.com/FelipeNavarrete0313/bibliotrack/issues/56) | Tarea técnica | E2 | Baja | 2 | 8 | — | Todo |
-| BUG-08 | [El registro acepta documentos con símbolos y contraseñas muy comunes](https://github.com/FelipeNavarrete0313/bibliotrack/issues/57) | Bug | E1 | Baja | 1 | 4 | — | Todo |
+| BUG-08 | [El registro acepta documentos con símbolos y contraseñas muy comunes](https://github.com/FelipeNavarrete0313/bibliotrack/issues/57) | Bug | E1 | Baja | 1 | 4 | — | Done |
 
 ## Resumen por sprint
 
@@ -66,5 +66,7 @@ Cada fila es un issue del repositorio. El detalle (historia, criterios, escenari
 | Sprint 2 | 2 nov – 15 nov | 32 | 128 | El lector solicita libros en línea, el bibliotecario registra préstamos y devoluciones, y el lector consulta los suyos |
 | Sprint 3 | 16 nov – 29 nov | 31 | 124 | Reservas, renovaciones, notificaciones y administración de roles, más dos bugs de la revisión de código (BUG-06 y BUG-07) |
 | Sin asignar | — | 19 | 76 | Reportes y multas, y las mejoras técnicas de la revisión de código, si queda capacidad |
+
+HU-15, HU-16 y BUG-08 no tenían sprint asignado y se terminaron durante el Sprint 3, junto con las demás historias del PR [#67](https://github.com/FelipeNavarrete0313/bibliotrack/pull/67). En esta tabla conservan «—» en la columna Sprint, igual que en el Project.
 
 La estimación se explica en [`estimacion.md`](estimacion.md) y la relación entre issues, ramas y pull requests en [`trazabilidad.md`](trazabilidad.md).
