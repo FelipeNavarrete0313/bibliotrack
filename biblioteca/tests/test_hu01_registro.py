@@ -63,3 +63,14 @@ def test_las_contrasenas_deben_coincidir(client, db):
 
 def test_el_inicio_de_sesion_ofrece_registrarse(client, db):
     assert reverse("registro") in client.get(reverse("iniciar_sesion")).content.decode()
+
+
+def test_el_documento_solo_acepta_numeros(client, db):
+    contenido = client.post(URL, datos(documento="<x>")).content.decode()
+    assert "El documento solo puede tener números (de 4 a 12 dígitos)." in contenido
+    assert not Perfil.objects.exists()
+
+
+def test_no_se_acepta_una_contrasena_solo_de_numeros(client, db):
+    respuesta = client.post(URL, datos(contrasena="12345678", confirmacion="12345678"))
+    assert respuesta.status_code == 200 and not Perfil.objects.exists()

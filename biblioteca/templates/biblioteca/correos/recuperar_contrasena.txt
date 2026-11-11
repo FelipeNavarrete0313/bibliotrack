@@ -1,0 +1,10 @@
+Hola{% if user.first_name %}, {{ user.first_name }}{% endif %}:
+
+Pediste recuperar la contraseña de tu cuenta de BiblioTrack. Abre este enlace para crear una nueva:
+
+{{ protocol }}://{{ domain }}{% url 'restablecer_contrasena' uidb64=uid token=token %}
+
+El enlace vence a los 30 minutos y solo sirve una vez.
+Si no fuiste tú, no hagas nada: tu contraseña sigue igual.
+
+Biblioteca · BiblioTrack

@@ -8,15 +8,15 @@ LIBROS = [
 
 
 def test_busca_por_parte_del_titulo():
-    assert [l["titulo"] for l in buscar(LIBROS, "soledad")] == ["Cien años de soledad"]
+    assert [libro["titulo"] for libro in buscar(LIBROS, "soledad")] == ["Cien años de soledad"]
 
 
 def test_busca_por_autor_sin_importar_mayusculas():
-    assert [l["titulo"] for l in buscar(LIBROS, "MARTIN")] == ["Clean Code"]
+    assert [libro["titulo"] for libro in buscar(LIBROS, "MARTIN")] == ["Clean Code"]
 
 
 def test_filtra_por_categoria():
-    assert [l["titulo"] for l in buscar(LIBROS, "", categoria="Matemáticas")] == ["Álgebra de Baldor"]
+    assert [libro["titulo"] for libro in buscar(LIBROS, "", categoria="Matemáticas")] == ["Álgebra de Baldor"]
 
 
 def test_sin_resultados_devuelve_lista_vacia():
@@ -25,8 +25,8 @@ def test_sin_resultados_devuelve_lista_vacia():
 
 def test_busqueda_ignora_tildes():
     # BUG-01: buscar "algebra" debe encontrar "Álgebra de Baldor"
-    assert [l["titulo"] for l in buscar(LIBROS, "algebra")] == ["Álgebra de Baldor"]
+    assert [libro["titulo"] for libro in buscar(LIBROS, "algebra")] == ["Álgebra de Baldor"]
 
 
 def test_busqueda_ignora_tildes_en_el_autor():
-    assert [l["titulo"] for l in buscar(LIBROS, "garcia marquez")] == ["Cien años de soledad"]
+    assert [libro["titulo"] for libro in buscar(LIBROS, "garcia marquez")] == ["Cien años de soledad"]

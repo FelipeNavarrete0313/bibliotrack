@@ -1,25 +1,37 @@
+from datetime import date
+from io import BytesIO
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import views as vistas_auth
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.views.decorators.http import require_POST
 
 from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
-from bibliotrack.catalogo import buscar
+from bibliotrack.catalogo import buscar, normalizar
 from bibliotrack.prestamos import PrestamoNoPermitido
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
+from bibliotrack.reportes import mas_prestados
 from bibliotrack.reservas import ReservaNoPermitida
+from bibliotrack.roles import CambioDeRolNoPermitido
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
 from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
-from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
-from .permisos import solo_personal
+from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
+from .permisos import solo_administrador, solo_personal
 
+POR_PAGINA = 20
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
 MENSAJE_BLOQUEO = (
     f"La cuenta está bloqueada por {seguridad.MINUTOS_DE_BLOQUEO} minutos "
@@ -35,7 +47,8 @@ def catalogo(request):
     resultados = buscar([libro.como_dict() for libro in activos], texto, categoria or None)
     categorias = activos.order_by("categoria").values_list("categoria", flat=True).distinct()
     return render(request, "biblioteca/catalogo.html", {
-        "resultados": resultados,
+        "resultados": pagina_de(request, resultados),
+        "consulta": urlencode({"q": texto, "categoria": categoria}) + "&" if texto or categoria else "",
         "texto": texto,
         "categoria": categoria,
         "categorias": categorias,
@@ -103,13 +116,20 @@ def prestamos(request):
     activos = Prestamo.objects.filter(estado=Prestamo.ACTIVO).select_related("lector__usuario", "libro")
     if buscar_prestamo:
         activos = activos.filter(Q(lector__documento=buscar_prestamo) | Q(libro__isbn=buscar_prestamo))
+    solo_vencidos = request.GET.get("vencidos") == "1"
+    vencidos = activos.filter(fecha_devolucion__lt=timezone.localdate())
+    total_vencidos = vencidos.count()
+    if solo_vencidos:
+        activos = vencidos
     pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).select_related("lector__usuario", "libro")
     servicios.actualizar_reservas()
     reservas_listas = Reserva.objects.filter(estado=Reserva.ACTIVA, guardada_hasta__isnull=False).select_related(
         "lector__usuario", "libro").order_by("guardada_hasta")
     return render(request, "biblioteca/prestamos.html", {
         "reservas_listas": reservas_listas,
-        "form": form, "activos": activos, "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+        "form": form, "activos": pagina_de(request, activos), "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+        "solo_vencidos": solo_vencidos, "total_vencidos": total_vencidos,
+        "consulta_paginas": "".join(f"{k}={val}&" for k, val in (("buscar", buscar_prestamo), ("vencidos", "1" if solo_vencidos else "")) if val),
         "pendientes": pendientes,
     })
 
@@ -127,7 +147,9 @@ def registrar_devolucion(request, pk):
         return redirect("prestamos")
     texto = f"Devolución registrada: «{libro.titulo}» de {prestamo.lector.nombre}."
     if retraso:
-        messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.")
+        multa = Multa.objects.filter(prestamo=prestamo).first()
+        cobro = f" Multa: {multa.en_pesos} por {multa.dias} día(s) hábil(es)." if multa else " No genera multa: los días de retraso fueron domingo o festivo."
+        messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.{cobro}")
     else:
         messages.success(request, f"{texto} Se entregó a tiempo.")
     return redirect("prestamos")
@@ -137,6 +159,10 @@ def iniciar_sesion(request):
     """HU-02: inicio de sesión con correo, error genérico y bloqueo por intentos fallidos."""
     if request.user.is_authenticated:
         return redirect("inicio")
+    # Si venía de una página que pide sesión, vuelve a ella después de entrar (solo rutas de este sitio).
+    destino = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        destino = ""
     form = InicioSesionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         correo = form.cleaned_data["correo"].strip()
@@ -150,10 +176,43 @@ def iniciar_sesion(request):
             if usuario:
                 seguridad.limpiar_fallos(correo)
                 login(request, usuario)
-                return redirect("inicio")
+                return redirect(destino or "inicio")
             seguridad.registrar_fallo(correo)
             messages.error(request, MENSAJE_BLOQUEO if seguridad.esta_bloqueado(correo) else MENSAJE_CREDENCIALES)
-    return render(request, "biblioteca/iniciar_sesion.html", {"form": form})
+    return render(request, "biblioteca/iniciar_sesion.html", {"form": form, "destino": destino})
+
+
+class RecuperarContrasena(vistas_auth.PasswordResetView):
+    """HU-03: el usuario escribe su correo y recibe un enlace. El mensaje es el mismo exista o no la cuenta."""
+
+    template_name = "biblioteca/recuperar_contrasena.html"
+    email_template_name = "biblioteca/correos/recuperar_contrasena.txt"
+    subject_template_name = "biblioteca/correos/recuperar_contrasena_asunto.txt"
+    success_url = reverse_lazy("recuperar_contrasena_enviado")
+
+
+class RestablecerContrasena(vistas_auth.PasswordResetConfirmView):
+    """HU-03: el enlace del correo (30 minutos, un solo uso) lleva a escribir la contraseña nueva."""
+
+    template_name = "biblioteca/restablecer_contrasena.html"
+    success_url = reverse_lazy("iniciar_sesion")
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        seguridad.desbloquear(form.user.email)
+        messages.success(self.request, "Tu contraseña fue cambiada. Ya puedes iniciar sesión.")
+        return respuesta
+
+
+class CambiarContrasena(vistas_auth.PasswordChangeView):
+    """El usuario con sesión cambia su contraseña escribiendo la actual."""
+
+    template_name = "biblioteca/cambiar_contrasena.html"
+    success_url = reverse_lazy("inicio")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tu contraseña fue cambiada.")
+        return super().form_valid(form)
 
 
 def registro(request):
@@ -179,8 +238,16 @@ def cerrar_sesion(request):
 def inicio(request):
     """HU-02: página de inicio según el rol del usuario."""
     perfil = getattr(request.user, "perfil", None)
-    pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).count() if perfil and perfil.es_personal else 0
-    return render(request, "biblioteca/inicio.html", {"perfil": perfil, "pendientes": pendientes})
+    pendientes, resumen = 0, None
+    if perfil and perfil.es_personal:
+        servicios.actualizar_reservas()
+        pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).count()
+        resumen = {
+            "reservas_listas": Reserva.objects.filter(estado=Reserva.ACTIVA, guardada_hasta__isnull=False).count(),
+            "vencidos": Prestamo.objects.filter(estado=Prestamo.ACTIVO, fecha_devolucion__lt=timezone.localdate()).count(),
+            "multas": Multa.objects.filter(estado=Multa.PENDIENTE).count(),
+        }
+    return render(request, "biblioteca/inicio.html", {"perfil": perfil, "pendientes": pendientes, "resumen": resumen})
 
 
 @login_required
@@ -219,6 +286,7 @@ def mis_prestamos(request):
     return render(request, "biblioteca/mis_prestamos.html", {
         "activos": activos, "historial": historial, "solicitudes": solicitudes,
         "reservas": perfil.reservas.filter(estado=Reserva.ACTIVA).select_related("libro").order_by("creada"),
+        "multas": perfil.multas_pendientes.select_related("prestamo__libro"),
     })
 
 
@@ -302,6 +370,9 @@ def perfil_de_lector(request):
 def solicitar_prestamo(request, pk):
     """HU-17: el lector solicita en línea el préstamo de un libro disponible."""
     perfil = perfil_de_lector(request)
+    if perfil.multas_pendientes.exists():  # HU-16
+        messages.error(request, "Tienes una multa pendiente. Págala en la biblioteca para pedir nuevos préstamos.")
+        return redirect("detalle_libro", pk=pk)
     activos = perfil.prestamos.filter(estado=Prestamo.ACTIVO)
     pendientes = perfil.solicitudes.filter(estado=Solicitud.PENDIENTE)
     # La revisión y la creación van en una transacción: dos lectores no toman el mismo ejemplar (BUG-07).
@@ -383,3 +454,123 @@ def rechazar_solicitud(request, pk):
         return redirect("prestamos")
     messages.info(request, f"Rechazaste la solicitud de «{solicitud.libro.titulo}» de {solicitud.lector.nombre}.")
     return redirect("prestamos")
+
+
+def pagina_de(request, elementos, por_pagina=POR_PAGINA):
+    """Página pedida en `?pagina=` de una lista (lista o consulta)."""
+    return Paginator(elementos, por_pagina).get_page(request.GET.get("pagina"))
+
+
+@solo_administrador
+def usuarios(request):
+    """HU-04: el administrador busca usuarios por nombre o documento y les cambia el rol."""
+    texto = request.GET.get("q", "").strip()
+    perfiles = Perfil.objects.select_related("usuario").order_by("usuario__first_name", "usuario__last_name")
+    if texto:
+        buscado = normalizar(texto)
+        perfiles = [p for p in perfiles if buscado in normalizar(p.nombre) or buscado in p.documento.lower()
+                    or buscado in p.usuario.email.lower()]
+    return render(request, "biblioteca/usuarios.html", {
+        "pagina": pagina_de(request, perfiles), "texto": texto, "roles": Perfil.ROLES,
+        "consulta": f"q={texto}&" if texto else "",
+        "administradores": Perfil.objects.filter(rol=Perfil.ADMINISTRADOR).count(),
+    })
+
+
+@solo_administrador
+@require_POST
+def cambiar_rol(request, pk):
+    """HU-04: cambia el rol de un usuario; siempre queda al menos un administrador."""
+    perfil = get_object_or_404(Perfil.objects.select_related("usuario"), pk=pk)
+    try:
+        servicios.cambiar_rol(perfil, request.POST.get("rol", ""))
+    except CambioDeRolNoPermitido as error:
+        messages.error(request, f"No se cambió el rol de {perfil.nombre}: {error}.")
+    else:
+        messages.success(request, f"{perfil.nombre} ahora es {perfil.get_rol_display().lower()}.")
+    volver = request.POST.get("q", "")
+    return redirect(f"{reverse('usuarios')}?q={volver}" if volver else "usuarios")
+
+
+@solo_personal
+def multas(request):
+    """HU-16: multas pendientes; el personal busca por documento y registra el pago."""
+    documento = request.GET.get("documento", "").strip()
+    pendientes = Multa.objects.filter(estado=Multa.PENDIENTE).select_related("lector__usuario", "prestamo__libro")
+    if documento:
+        pendientes = pendientes.filter(lector__documento=documento)
+    return render(request, "biblioteca/multas.html", {
+        "pagina": pagina_de(request, pendientes), "documento": documento,
+        "consulta": f"documento={documento}&" if documento else "",
+        "total": sum(m.valor for m in pendientes), "valor_por_dia": Multa(valor=settings.MULTA_POR_DIA).en_pesos,
+    })
+
+
+@solo_personal
+@require_POST
+def pagar_multa(request, pk):
+    """HU-16: registra el pago de una multa pendiente."""
+    multa = get_object_or_404(Multa.objects.select_related("lector__usuario", "prestamo__libro"), pk=pk)
+    try:
+        servicios.pagar_multa(multa)
+    except PrestamoNoPermitido as error:
+        messages.error(request, f"{error}.")
+    else:
+        messages.success(request, f"Pago registrado: {multa.en_pesos} de {multa.lector.nombre} por «{multa.prestamo.libro.titulo}».")
+    return redirect("multas")
+
+
+def _fecha(texto, por_defecto):
+    try:
+        return date.fromisoformat(texto)
+    except (TypeError, ValueError):
+        return por_defecto
+
+
+@solo_administrador
+def reporte_mas_prestados(request):
+    """HU-15: los 10 libros más prestados en un rango de fechas, con filtro por categoría y descarga en Excel."""
+    hoy = timezone.localdate()
+    desde = _fecha(request.GET.get("desde"), hoy.replace(day=1))
+    hasta = _fecha(request.GET.get("hasta"), hoy)
+    if desde > hasta:
+        desde, hasta = hasta, desde
+    categoria = request.GET.get("categoria", "")
+    prestamos_del_periodo = Prestamo.objects.filter(fecha_prestamo__range=(desde, hasta)).values(
+        "fecha_prestamo", isbn=F("libro__isbn"), titulo=F("libro__titulo"), autor=F("libro__autor"), categoria=F("libro__categoria"),
+    )
+    filas = mas_prestados(list(prestamos_del_periodo), desde, hasta, categoria or None)
+    if request.GET.get("formato") == "xlsx":
+        return _reporte_en_excel(filas, desde, hasta, categoria)
+    return render(request, "biblioteca/reporte_mas_prestados.html", {
+        "filas": filas, "desde": desde, "hasta": hasta, "categoria": categoria,
+        "categorias": Libro.objects.order_by("categoria").values_list("categoria", flat=True).distinct(),
+        "consulta": urlencode({"desde": desde.isoformat(), "hasta": hasta.isoformat(), "categoria": categoria}),
+        "total": sum(fila["prestamos"] for fila in filas),
+    })
+
+
+def _reporte_en_excel(filas, desde, hasta, categoria):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    libro_excel = Workbook()
+    hoja = libro_excel.active
+    hoja.title = "Más prestados"
+    hoja.append(["BiblioTrack · Libros más prestados"])
+    hoja.append([f"Del {desde:%d/%m/%Y} al {hasta:%d/%m/%Y}" + (f" · Categoría: {categoria}" if categoria else "")])
+    hoja.append([])
+    hoja.append(["Puesto", "Título", "Autor", "Categoría", "ISBN", "Préstamos"])
+    for puesto, fila in enumerate(filas, 1):
+        hoja.append([puesto, fila["titulo"], fila["autor"], fila["categoria"], fila["isbn"], fila["prestamos"]])
+    hoja["A1"].font = Font(bold=True, size=14)
+    for celda in hoja[4]:
+        celda.font = Font(bold=True)
+    for columna, ancho in zip("ABCDEF", (8, 45, 30, 18, 20, 12), strict=True):
+        hoja.column_dimensions[columna].width = ancho
+    archivo = BytesIO()
+    libro_excel.save(archivo)
+    respuesta = HttpResponse(archivo.getvalue(),
+                             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    respuesta["Content-Disposition"] = f'attachment; filename="mas-prestados-{desde:%Y%m%d}-{hasta:%Y%m%d}.xlsx"'
+    return respuesta

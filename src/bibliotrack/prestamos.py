@@ -31,7 +31,7 @@ def registrar_prestamo(lector, libro, hoy=None):
     """
     hoy = hoy or date.today()
     if lector["prestamos_activos"] >= MAXIMO_PRESTAMOS_ACTIVOS:
-        raise PrestamoNoPermitido("El lector ya tiene 3 préstamos activos")
+        raise PrestamoNoPermitido(f"El lector ya tiene {MAXIMO_PRESTAMOS_ACTIVOS} préstamos activos")
     if libro["disponibles"] <= 0:
         raise PrestamoNoPermitido("No hay ejemplares disponibles")
 

@@ -42,3 +42,18 @@ def test_cargar_datos_dos_veces_no_duplica(db):
     call_command("cargar_datos")
     assert Libro.objects.count() == 20
     assert Perfil.objects.count() == 5
+
+
+def test_los_datos_de_demostracion_cuadran(db):
+    from django.core.management import call_command
+
+    from biblioteca.models import Multa, Prestamo, Reserva, Solicitud
+
+    call_command("cargar_datos", demo=True)
+    call_command("cargar_datos", demo=True)  # la segunda vez no duplica nada
+    assert Prestamo.objects.filter(estado=Prestamo.ACTIVO).count() == 4
+    assert Prestamo.objects.filter(estado=Prestamo.DEVUELTO).count() == 11
+    assert (Multa.objects.count(), Reserva.objects.count(), Solicitud.objects.count()) == (1, 1, 1)
+    for libro in Libro.objects.all():
+        activos = libro.prestamos.filter(estado=Prestamo.ACTIVO).count()
+        assert libro.disponibles + activos == libro.total_ejemplares, libro.titulo

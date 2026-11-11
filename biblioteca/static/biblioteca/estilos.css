@@ -76,3 +76,12 @@ tr.fila-por-vencer td { background: #fdf3d7; }
 .estado-entregada { color: var(--verde); font-weight: 600; }
 .estado-rechazada { color: var(--rojo); font-weight: 600; }
 .estado-cancelada { color: var(--texto-suave); }
+
+.paginas { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
+
+.aviso-multa { border-left: 6px solid #b42318; }
+
+@media print {
+  header, .pie, .mensajes, .no-imprimir { display: none !important; }
+  body { background: #fff; }
+}

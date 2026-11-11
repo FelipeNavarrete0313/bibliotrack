@@ -31,3 +31,9 @@ def registrar_fallo(correo):
 
 def limpiar_fallos(correo):
     cache.delete(_clave(correo, "intentos"))
+
+
+def desbloquear(correo):
+    """Quita el bloqueo y los intentos; se usa cuando el usuario restablece su contraseña (HU-03)."""
+    cache.delete(_clave(correo, "bloqueo"))
+    limpiar_fallos(correo)

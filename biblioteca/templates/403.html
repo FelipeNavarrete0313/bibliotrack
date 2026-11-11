@@ -2,6 +2,6 @@
 {% block titulo %}Sin permiso{% endblock %}
 {% block contenido %}
 <h1>No tienes permiso para ver esta página</h1>
-<p class="ayuda">Esta página es solo para el personal de la biblioteca.</p>
+<p class="ayuda">{{ exception|default:"Tu cuenta no tiene permiso para hacer esto." }}</p>
 <p><a href="{% url 'catalogo' %}">Volver al catálogo</a></p>
 {% endblock %}

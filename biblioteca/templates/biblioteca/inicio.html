@@ -10,8 +10,13 @@
   <a href="{% url 'mis_prestamos' %}"><div class="tarjeta"><h2>Mis préstamos</h2><p class="ayuda">Mira qué libros tienes, cuándo debes devolverlos y tu historial.</p></div></a>
   {% endif %}
   {% if perfil.es_personal %}
-  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Préstamos y devoluciones</h2><p class="ayuda">Entrega las solicitudes de los lectores, presta un libro con el documento del lector y registra devoluciones.</p>{% if pendientes %}<p class="aviso">{{ pendientes }} solicitud(es) pendiente(s)</p>{% endif %}</div></a>
+  <a href="{% url 'prestamos' %}"><div class="tarjeta"><h2>Préstamos y devoluciones</h2><p class="ayuda">Entrega las solicitudes de los lectores, presta un libro con el documento del lector y registra devoluciones.</p>{% if pendientes %}<p class="aviso">{{ pendientes }} solicitud(es) pendiente(s)</p>{% endif %}{% if resumen.reservas_listas %}<p class="aviso">{{ resumen.reservas_listas }} reserva(s) lista(s) para entregar</p>{% endif %}{% if resumen.vencidos %}<p class="aviso">{{ resumen.vencidos }} préstamo(s) vencido(s)</p>{% endif %}</div></a>
+  <a href="{% url 'multas' %}"><div class="tarjeta"><h2>Multas</h2><p class="ayuda">Consulta las multas por devolución tardía y registra su pago.</p>{% if resumen.multas %}<p class="aviso">{{ resumen.multas }} multa(s) pendiente(s)</p>{% endif %}</div></a>
   <a href="{% url 'registrar_libro' %}"><div class="tarjeta"><h2>Registrar un libro</h2><p class="ayuda">Agrega un título nuevo al catálogo con sus ejemplares.</p></div></a>
+  {% endif %}
+  {% if perfil.rol == 'administrador' %}
+  <a href="{% url 'reporte_mas_prestados' %}"><div class="tarjeta"><h2>Libros más prestados</h2><p class="ayuda">Mira qué títulos se prestan más en un período y descarga el reporte en Excel.</p></div></a>
+  <a href="{% url 'usuarios' %}"><div class="tarjeta"><h2>Usuarios y roles</h2><p class="ayuda">Busca un usuario y cámbiale el rol: lector, bibliotecario o administrador.</p></div></a>
   {% endif %}
 </div>
 {% endblock %}
