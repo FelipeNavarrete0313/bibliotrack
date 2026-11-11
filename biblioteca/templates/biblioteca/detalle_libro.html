@@ -18,6 +18,7 @@
         <span class="agotado">Agotado</span> · 0 de {{ libro.total_ejemplares }} ejemplares
         {% if proxima %}<br>Próxima devolución: {{ proxima.fecha_devolucion|date:"d/m/Y" }}{% endif %}
       {% endif %}
+      {% if en_cola %}<br><span class="ayuda">{{ en_cola }} reserva{{ en_cola|pluralize }} en cola</span>{% endif %}
     </dd>
   </dl>
 </div>
@@ -28,15 +29,24 @@
   {% elif solicitud %}
     <p>Ya solicitaste este libro el {{ solicitud.creada|date:"d/m/Y" }}. <b>Estado: pendiente</b>. Recógelo en el mostrador de la biblioteca.</p>
   {% elif hay_ejemplar_libre %}
+    {% if reserva %}<p><b>Tu reserva está lista.</b> Hay un ejemplar guardado para ti hasta el {{ reserva.guardada_hasta|date:"d/m/Y H:i" }}. Solicítalo aquí o recógelo en el mostrador.</p>{% endif %}
     <form method="post" action="{% url 'solicitar_prestamo' libro.pk %}">
       {% csrf_token %}
       <button type="submit">Solicitar préstamo</button>
     </form>
     <p class="ayuda">La biblioteca prepara el libro y te lo entrega en el mostrador. Tienes 15 días para devolverlo.</p>
-  {% elif libro.disponibles %}
-    <p class="ayuda">Los ejemplares disponibles ya están solicitados. Vuelve a intentarlo más tarde.</p>
+  {% elif reserva %}
+    <p>Reservaste este libro el {{ reserva.creada|date:"d/m/Y" }}: estás en el <b>puesto {{ reserva.puesto }} de la cola</b>. Cuando devuelvan un ejemplar, se guardará 48 horas para ti.</p>
+    <form method="post" action="{% url 'cancelar_reserva' reserva.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario">Cancelar reserva</button></form>
   {% else %}
-    <p class="ayuda">No hay ejemplares para solicitar en este momento.</p>
+    {% if not libro.disponibles %}<p class="ayuda">No hay ejemplares para solicitar en este momento.</p>
+    {% elif en_espera %}<p class="ayuda">Los ejemplares disponibles ya están solicitados.</p>
+    {% else %}<p class="ayuda">Los ejemplares disponibles están guardados para una reserva.</p>{% endif %}
+    <form method="post" action="{% url 'reservar_libro' libro.pk %}">
+      {% csrf_token %}
+      <button type="submit">Reservar</button>
+    </form>
+    <p class="ayuda">Entras a la cola por orden de llegada. Cuando devuelvan un ejemplar, se guarda 48 horas para ti. Puedes tener máximo 2 reservas activas.</p>
   {% endif %}
 </div>
 {% elif not user.is_authenticated and hay_ejemplar_libre %}
