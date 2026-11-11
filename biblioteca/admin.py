@@ -19,14 +19,43 @@ from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
 admin.site.register([Perfil, Reserva])
 
 
+class LibroAdminForm(forms.ModelForm):
+    """BUG-06: los disponibles se calculan; nunca se escriben a mano."""
+
+    class Meta:
+        model = Libro
+        fields = ["titulo", "autor", "isbn", "categoria", "descripcion", "total_ejemplares", "activo"]
+
+    def prestados(self):
+        if self.instance.pk is None:
+            return 0
+        return self.instance.prestamos.filter(estado=Prestamo.ACTIVO).count()
+
+    def clean_total_ejemplares(self):
+        total = self.cleaned_data["total_ejemplares"]
+        prestados = self.prestados()
+        minimo = max(1, prestados)
+        if total < minimo:
+            raise forms.ValidationError(f"Debe haber al menos {minimo} ejemplar(es): hay {prestados} prestado(s).")
+        return total
+
+    def save(self, commit=True):
+        libro = super().save(commit=False)
+        libro.disponibles = libro.total_ejemplares - self.prestados()
+        if commit:
+            libro.save()
+        return libro
+
+
 @admin.register(Libro)
 class LibroAdmin(admin.ModelAdmin):
+    form = LibroAdminForm
     list_display = ["titulo", "autor", "isbn", "categoria", "disponibles", "total_ejemplares", "activo"]
     list_filter = ["categoria", "activo"]
     search_fields = ["titulo", "autor", "isbn"]
 
     def get_readonly_fields(self, request, obj=None):
-        # Los disponibles solo cambian con préstamos y devoluciones.
+        # Los disponibles solo cambian con préstamos, devoluciones o al cambiar el total (BUG-06).
         return ["disponibles"] if obj else []
 
 
@@ -120,6 +149,9 @@ class PrestamoAdminForm(forms.ModelForm):
                 raise forms.ValidationError("Un préstamo devuelto no se puede volver a activar.")
             if datos.get("libro") != self.instance.libro or datos.get("lector") != self.instance.lector:
                 raise forms.ValidationError("No se puede cambiar el lector ni el libro de un préstamo; devuélvelo y registra uno nuevo.")
+        prestado, devolver = datos.get("fecha_prestamo"), datos.get("fecha_devolucion")
+        if prestado and devolver and devolver < prestado:  # BUG-06
+            raise forms.ValidationError("La fecha de devolución no puede ser anterior a la fecha de préstamo.")
         return datos
 
 
