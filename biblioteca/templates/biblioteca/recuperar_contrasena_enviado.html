@@ -1,0 +1,10 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Revisa tu correo{% endblock %}
+{% block contenido %}
+<h1>Revisa tu correo</h1>
+<div class="tarjeta angosta">
+  <p>Si hay una cuenta con ese correo, te enviamos un enlace para crear una contraseña nueva.</p>
+  <p class="ayuda">El enlace vence a los 30 minutos y solo sirve una vez. Si no llega, revisa el correo no deseado o vuelve a pedirlo.</p>
+  <p><a href="{% url 'iniciar_sesion' %}">Volver a iniciar sesión</a></p>
+</div>
+{% endblock %}

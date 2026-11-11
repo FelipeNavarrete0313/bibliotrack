@@ -24,6 +24,7 @@
   </tr>
   {% endfor %}
 </table>
+{% include "biblioteca/_paginas.html" with pagina=resultados %}
 {% elif hubo_busqueda %}
 <p class="vacio">No encontramos libros con «{{ texto }}». Prueba con otra palabra o con otra categoría.</p>
 {% else %}

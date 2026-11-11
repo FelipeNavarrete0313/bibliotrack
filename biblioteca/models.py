@@ -42,6 +42,11 @@ class Perfil(models.Model):
     def solicitudes_pendientes(self):
         return self.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
 
+    @property
+    def multas_pendientes(self):
+        """HU-16: con multas pendientes no se pueden pedir nuevos préstamos."""
+        return self.multas.filter(estado=Multa.PENDIENTE)
+
 
 class Libro(models.Model):
     titulo = models.CharField("título", max_length=200)
@@ -88,6 +93,9 @@ class Prestamo(models.Model):
     fecha_devolucion = models.DateField("fecha de devolución")
     fecha_entrega = models.DateField("fecha real de entrega", null=True, blank=True)
     renovado = models.BooleanField(default=False)
+    # HU-14: cuándo se envió cada aviso por correo, para no repetirlo.
+    aviso_por_vencer = models.DateField("aviso antes de vencer enviado el", null=True, blank=True)
+    aviso_vencido = models.DateField("aviso de vencido enviado el", null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default=ACTIVO)
 
     class Meta:
@@ -151,3 +159,30 @@ class Solicitud(models.Model):
 
     def __str__(self):
         return f"Solicitud de {self.libro.titulo} por {self.lector.nombre}"
+
+
+class Multa(models.Model):
+    """HU-16: multa por devolver un libro tarde. Se crea al registrar la devolución."""
+
+    PENDIENTE = "pendiente"
+    PAGADA = "pagada"
+    ESTADOS = [(PENDIENTE, "Pendiente"), (PAGADA, "Pagada")]
+
+    prestamo = models.OneToOneField(Prestamo, on_delete=models.CASCADE, related_name="multa")
+    lector = models.ForeignKey(Perfil, on_delete=models.PROTECT, related_name="multas")
+    dias = models.PositiveIntegerField("días de retraso cobrados")
+    valor = models.PositiveIntegerField("valor en pesos")
+    estado = models.CharField(max_length=10, choices=ESTADOS, default=PENDIENTE)
+    creada = models.DateField()
+    pagada = models.DateField("pagada el", null=True, blank=True)
+
+    class Meta:
+        ordering = ["creada"]
+
+    def __str__(self):
+        return f"Multa de {self.en_pesos} a {self.lector.nombre} por {self.prestamo.libro.titulo}"
+
+    @property
+    def en_pesos(self):
+        """El valor como se escribe en Colombia: $3.000."""
+        return "$" + f"{self.valor:,}".replace(",", ".")

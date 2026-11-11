@@ -15,6 +15,8 @@ jobs:
           python-version: "3.12"
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
+      - name: Revisar el estilo del código
+        run: ruff check .
       - name: Revisar la configuración de Django
         run: python manage.py check
       - name: Revisar que no falten migraciones

@@ -4,6 +4,7 @@
 <h1>Iniciar sesión</h1>
 <form class="tarjeta angosta" method="post" action="{% url 'iniciar_sesion' %}" novalidate>
   {% csrf_token %}
+  {% if destino %}<input type="hidden" name="next" value="{{ destino }}">{% endif %}
   {% for campo in form %}
   <div class="form-fila">
     <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
@@ -12,6 +13,7 @@
   </div>
   {% endfor %}
   <button type="submit">Entrar</button>
+  <p class="ayuda"><a href="{% url 'recuperar_contrasena' %}">¿Olvidaste tu contraseña?</a></p>
   <p class="ayuda">¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a></p>
 </form>
 {% endblock %}

@@ -1,0 +1,38 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<h1>Usuarios</h1>
+<form class="buscador" method="get" action="{% url 'usuarios' %}" role="search">
+  <input type="search" name="q" value="{{ texto }}" placeholder="Busca por nombre, documento o correo" aria-label="Buscar usuario por nombre, documento o correo">
+  <button type="submit">Buscar</button>
+  {% if texto %}<a class="boton boton-secundario" href="{% url 'usuarios' %}">Ver todos</a>{% endif %}
+</form>
+{% if pagina.object_list %}
+<table>
+  <thead><tr><th scope="col">Nombre</th><th scope="col">Documento</th><th scope="col">Correo</th><th scope="col">Rol</th></tr></thead>
+  <tbody>
+  {% for p in pagina %}
+  <tr>
+    <td>{{ p.nombre }}{% if p.usuario == user %} <span class="ayuda">(tú)</span>{% endif %}</td>
+    <td>{{ p.documento }}</td>
+    <td>{{ p.usuario.email }}</td>
+    <td>
+      <form class="acciones" method="post" action="{% url 'cambiar_rol' p.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="q" value="{{ texto }}">
+        <select name="rol" aria-label="Rol de {{ p.nombre }}">
+          {% for valor, nombre in roles %}<option value="{{ valor }}" {% if valor == p.rol %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="boton-secundario" aria-label="Guardar el rol de {{ p.nombre }}">Guardar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "biblioteca/_paginas.html" with consulta=consulta %}
+<p class="ayuda">Hay {{ administradores }} administrador{{ administradores|pluralize:"es" }}. Siempre debe quedar al menos uno. Las cuentas nuevas se crean en «Registrarse» como lector; aquí se les cambia el rol.</p>
+{% else %}
+<p class="vacio">No hay usuarios con «{{ texto }}».</p>
+{% endif %}
+{% endblock %}

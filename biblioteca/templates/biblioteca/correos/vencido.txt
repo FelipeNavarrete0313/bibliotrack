@@ -1,0 +1,12 @@
+Hola, {{ nombre }}:
+
+Tu préstamo de «{{ libro.titulo }}» venció el {{ prestamo.fecha_devolucion|date:"d/m/Y" }} (hace {{ dias_vencido }} día{{ dias_vencido|pluralize }}).
+
+Por favor, devuelve el libro en el mostrador de la biblioteca lo antes posible.
+Cada día de retraso en que la biblioteca abre genera una multa.
+
+Puedes ver tus préstamos aquí:
+
+{{ enlace }}
+
+Biblioteca · BiblioTrack
