@@ -102,18 +102,31 @@ class Reserva(models.Model):
     ACTIVA = "activa"
     ATENDIDA = "atendida"
     CANCELADA = "cancelada"
-    ESTADOS = [(ACTIVA, "Activa"), (ATENDIDA, "Atendida"), (CANCELADA, "Cancelada")]
+    VENCIDA = "vencida"
+    ESTADOS = [(ACTIVA, "Activa"), (ATENDIDA, "Atendida"), (CANCELADA, "Cancelada"), (VENCIDA, "Vencida")]
 
     lector = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name="reservas")
     libro = models.ForeignKey(Libro, on_delete=models.CASCADE, related_name="reservas")
     creada = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default=ACTIVA)
+    # HU-13: cuando se devuelve un ejemplar, se guarda 48 horas para la primera reserva de la cola.
+    guardada_hasta = models.DateTimeField("guardada hasta", null=True, blank=True)
 
     class Meta:
         ordering = ["creada"]
 
     def __str__(self):
         return f"Reserva de {self.libro.titulo} para {self.lector.nombre}"
+
+    @property
+    def lista_para_recoger(self):
+        """Hay un ejemplar guardado para esta reserva."""
+        return self.estado == self.ACTIVA and self.guardada_hasta is not None
+
+    @property
+    def puesto(self):
+        """Lugar en la cola del libro (1 = la siguiente), por orden de llegada."""
+        return Reserva.objects.filter(libro_id=self.libro_id, estado=self.ACTIVA, creada__lt=self.creada).count() + 1
 
 
 class Solicitud(models.Model):
