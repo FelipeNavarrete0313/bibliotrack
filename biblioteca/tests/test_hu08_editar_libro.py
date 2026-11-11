@@ -4,7 +4,7 @@ from datetime import date
 
 from django.urls import reverse
 
-from biblioteca.models import Libro, Prestamo, Solicitud
+from biblioteca.models import Libro, Prestamo, Reserva, Solicitud
 
 
 def editar(client, libro, **cambios):
@@ -97,3 +97,14 @@ def test_mis_prestamos_no_enlaza_a_un_libro_dado_de_baja(client, bibliotecario, 
     contenido = client.get(reverse("mis_prestamos")).content.decode()
     assert "Clean Code" in contenido
     assert reverse("detalle_libro", args=[libro.pk]) not in contenido
+
+
+def test_dar_de_baja_cancela_las_reservas_activas(client, bibliotecario, lector, libro):
+    # HU-13: un ejemplar guardado para una reserva no impide la baja, pero la reserva se cancela.
+    reserva = Reserva.objects.create(lector=lector, libro=libro)
+    client.force_login(bibliotecario.usuario)
+    client.post(reverse("dar_de_baja", args=[libro.pk]))
+    reserva.refresh_from_db()
+    assert reserva.estado == Reserva.CANCELADA
+    client.force_login(lector.usuario)
+    assert "No tienes reservas." in client.get(reverse("mis_prestamos")).content.decode()

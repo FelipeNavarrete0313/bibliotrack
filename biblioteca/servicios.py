@@ -91,7 +91,7 @@ def registrar_devolucion(prestamo, hoy=None):
 
 
 def dar_de_baja(libro):
-    """HU-08: saca el libro del catálogo y rechaza sus solicitudes pendientes.
+    """HU-08: saca el libro del catálogo, rechaza sus solicitudes pendientes y cancela sus reservas.
 
     Devuelve cuántas solicitudes se rechazaron.
     """
@@ -104,6 +104,8 @@ def dar_de_baja(libro):
                 rechazadas += 1
             except PrestamoNoPermitido:  # otra petición la atendió primero (BUG-05)
                 pass
+        # HU-13: las reservas de un libro que sale del catálogo ya no se pueden atender.
+        Reserva.objects.filter(libro=libro, estado=Reserva.ACTIVA).update(estado=Reserva.CANCELADA)
     libro.activo = False
     return rechazadas
 
