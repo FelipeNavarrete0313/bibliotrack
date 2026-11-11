@@ -42,3 +42,20 @@ ALTER TABLE "biblioteca_reserva" ADD COLUMN "guardada_hasta" datetime NULL;
 --
 -- (no-op)
 COMMIT;
+
+-- HU-14 y HU-16 · migración 0005 (py manage.py sqlmigrate biblioteca 0005)
+BEGIN;
+--
+-- Add field aviso_por_vencer to prestamo
+--
+ALTER TABLE "biblioteca_prestamo" ADD COLUMN "aviso_por_vencer" date NULL;
+--
+-- Add field aviso_vencido to prestamo
+--
+ALTER TABLE "biblioteca_prestamo" ADD COLUMN "aviso_vencido" date NULL;
+--
+-- Create model Multa
+--
+CREATE TABLE "biblioteca_multa" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "dias" integer unsigned NOT NULL CHECK ("dias" >= 0), "valor" integer unsigned NOT NULL CHECK ("valor" >= 0), "estado" varchar(10) NOT NULL, "creada" date NOT NULL, "pagada" date NULL, "lector_id" bigint NOT NULL REFERENCES "biblioteca_perfil" ("id") DEFERRABLE INITIALLY DEFERRED, "prestamo_id" bigint NOT NULL UNIQUE REFERENCES "biblioteca_prestamo" ("id") DEFERRABLE INITIALLY DEFERRED);
+CREATE INDEX "biblioteca_multa_lector_id_0f7c78cc" ON "biblioteca_multa" ("lector_id");
+COMMIT;
