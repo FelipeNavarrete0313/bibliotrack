@@ -81,7 +81,7 @@ Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las página
 
 ### Cómo se presta un libro
 
-1. El **lector** inicia sesión, abre un libro disponible y pulsa **«Solicitar préstamo»** (HU-17).
+1. El **lector** inicia sesión, abre un libro disponible y pulsa **«Solicitar préstamo»** (HU-17). Si los ejemplares libres ya están solicitados por otros lectores, el botón no aparece (BUG-07).
 2. La **bibliotecaria** entra a **Préstamos**, ve la solicitud pendiente y pulsa **«Entregar»**. Se crea el préstamo a 15 días con las reglas de HU-09. También puede **«Rechazar»**.
 3. El lector ve su préstamo y la fecha de devolución en **Mis préstamos** (HU-11). Puede cancelar una solicitud mientras siga pendiente.
 4. Cuando devuelve el libro, la bibliotecaria pulsa **«Registrar devolución»** en Préstamos (HU-10). Si hay retraso, se muestran los días.
@@ -98,7 +98,8 @@ El panel aplica las mismas reglas que las páginas (BUG-04):
 
 - En **Solicitudes**, grabar una solicitud como «Entregada» crea el préstamo y descuenta el ejemplar. También hay acciones para entregar o rechazar varias a la vez.
 - En **Préstamos**, grabar un préstamo como «Devuelto» (o usar la acción «Registrar la devolución») suma el ejemplar.
-- «Ejemplares disponibles» no se edita a mano: solo cambia con préstamos y devoluciones.
+- «Ejemplares disponibles» no se edita a mano: cambia con préstamos y devoluciones, y se recalcula al cambiar el «número de ejemplares» (BUG-06).
+- Borrar un préstamo activo que vino de una solicitud devuelve el ejemplar y deja la solicitud otra vez «Pendiente» (BUG-06).
 
 ### Usuarios de prueba
 
