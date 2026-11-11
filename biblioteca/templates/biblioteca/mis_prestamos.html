@@ -27,6 +27,24 @@
 <p class="vacio">No has solicitado libros. Busca uno en el <a href="{% url 'catalogo' %}">catálogo</a> y pulsa «Solicitar préstamo».</p>
 {% endif %}
 
+<h2>Mis reservas</h2>
+{% if reservas %}
+<table>
+  <tr><th>Libro</th><th>Reservada</th><th>Estado</th><th></th></tr>
+  {% for r in reservas %}
+  <tr>
+    <td><a href="{% url 'detalle_libro' r.libro.pk %}">{{ r.libro.titulo }}</a></td>
+    <td>{{ r.creada|date:"d/m/Y" }}</td>
+    <td>{% if r.lista_para_recoger %}<b>Lista para recoger</b> hasta el {{ r.guardada_hasta|date:"d/m/Y H:i" }}{% else %}En cola · puesto {{ r.puesto }}{% endif %}</td>
+    <td><form method="post" action="{% url 'cancelar_reserva' r.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario" aria-label="Cancelar la reserva de {{ r.libro.titulo }}">Cancelar reserva</button></form></td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="ayuda">Cuando devuelven un ejemplar, se guarda 48 horas para la primera reserva de la cola. Si no lo recoges a tiempo, pasa a la siguiente.</p>
+{% else %}
+<p class="vacio">No tienes reservas. Puedes reservar un libro agotado desde su página; máximo 2 reservas activas.</p>
+{% endif %}
+
 <h2>Préstamos activos</h2>
 {% if activos %}
 <table>
