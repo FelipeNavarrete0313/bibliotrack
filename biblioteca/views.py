@@ -3,26 +3,29 @@ from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth import views as vistas_auth
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
-from bibliotrack.catalogo import buscar
+from bibliotrack.catalogo import buscar, normalizar
 from bibliotrack.prestamos import PrestamoNoPermitido
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
 from bibliotrack.reservas import ReservaNoPermitida
+from bibliotrack.roles import CambioDeRolNoPermitido
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
 from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
 from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
-from .permisos import solo_personal
+from .permisos import solo_administrador, solo_personal
 
+POR_PAGINA = 20
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
 MENSAJE_BLOQUEO = (
     f"La cuenta está bloqueada por {seguridad.MINUTOS_DE_BLOQUEO} minutos "
@@ -423,3 +426,39 @@ def rechazar_solicitud(request, pk):
         return redirect("prestamos")
     messages.info(request, f"Rechazaste la solicitud de «{solicitud.libro.titulo}» de {solicitud.lector.nombre}.")
     return redirect("prestamos")
+
+
+def pagina_de(request, elementos, por_pagina=POR_PAGINA):
+    """Página pedida en `?pagina=` de una lista (lista o consulta)."""
+    return Paginator(elementos, por_pagina).get_page(request.GET.get("pagina"))
+
+
+@solo_administrador
+def usuarios(request):
+    """HU-04: el administrador busca usuarios por nombre o documento y les cambia el rol."""
+    texto = request.GET.get("q", "").strip()
+    perfiles = Perfil.objects.select_related("usuario").order_by("usuario__first_name", "usuario__last_name")
+    if texto:
+        buscado = normalizar(texto)
+        perfiles = [p for p in perfiles if buscado in normalizar(p.nombre) or buscado in p.documento.lower()
+                    or buscado in p.usuario.email.lower()]
+    return render(request, "biblioteca/usuarios.html", {
+        "pagina": pagina_de(request, perfiles), "texto": texto, "roles": Perfil.ROLES,
+        "consulta": f"q={texto}&" if texto else "",
+        "administradores": Perfil.objects.filter(rol=Perfil.ADMINISTRADOR).count(),
+    })
+
+
+@solo_administrador
+@require_POST
+def cambiar_rol(request, pk):
+    """HU-04: cambia el rol de un usuario; siempre queda al menos un administrador."""
+    perfil = get_object_or_404(Perfil.objects.select_related("usuario"), pk=pk)
+    try:
+        servicios.cambiar_rol(perfil, request.POST.get("rol", ""))
+    except CambioDeRolNoPermitido as error:
+        messages.error(request, f"No se cambió el rol de {perfil.nombre}: {error}.")
+    else:
+        messages.success(request, f"{perfil.nombre} ahora es {perfil.get_rol_display().lower()}.")
+    volver = request.POST.get("q", "")
+    return redirect(f"{reverse('usuarios')}?q={volver}" if volver else "usuarios")

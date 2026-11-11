@@ -36,3 +36,8 @@ def libro(db):
         titulo="Clean Code", autor="Robert C. Martin", isbn="978-0132350884",
         categoria="Programación", descripcion="Buenas prácticas.", total_ejemplares=2, disponibles=2,
     )
+
+
+@pytest.fixture
+def administrador(db):
+    return crear_usuario("diego@bibliotrack.test", "3001", Perfil.ADMINISTRADOR, nombre="Diego", apellido="Ramírez")

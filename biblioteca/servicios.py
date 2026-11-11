@@ -10,9 +10,10 @@ from django.utils import timezone
 from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
+from bibliotrack.roles import validar_cambio_de_rol
 from bibliotrack.reservas import ReservaNoPermitida, ejemplares_libres, guardar_hasta, reservas_por_guardar, validar_reserva
 
-from .models import Libro, Prestamo, Reserva, Solicitud
+from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
 
 
 def crear_prestamo(lector, libro):
@@ -135,6 +136,17 @@ def borrar_prestamo(prestamo):
             libro.save(update_fields=["disponibles"])
             actualizar_reservas(libro)
         prestamo.delete()
+
+
+# ---------------------------------------------------------------- Usuarios (HU-04)
+
+def cambiar_rol(perfil, rol_nuevo):
+    """HU-04: cambia el rol de un usuario. Lanza CambioDeRolNoPermitido si dejaría el sistema sin administrador."""
+    with transaction.atomic():
+        actual = Perfil.objects.select_for_update().get(pk=perfil.pk)
+        validar_cambio_de_rol(actual.rol, rol_nuevo, Perfil.objects.filter(rol=Perfil.ADMINISTRADOR).count())
+        Perfil.objects.filter(pk=perfil.pk).update(rol=rol_nuevo)
+    perfil.rol = rol_nuevo
 
 
 # ---------------------------------------------------------------- Reservas (HU-13)
