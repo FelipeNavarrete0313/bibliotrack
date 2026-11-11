@@ -1,7 +1,7 @@
-from django.conf import settings
 from datetime import date
 from io import BytesIO
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth import views as vistas_auth
@@ -13,8 +13,8 @@ from django.db.models import F, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.views.decorators.http import require_POST
 
 from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
@@ -566,7 +566,7 @@ def _reporte_en_excel(filas, desde, hasta, categoria):
     hoja["A1"].font = Font(bold=True, size=14)
     for celda in hoja[4]:
         celda.font = Font(bold=True)
-    for columna, ancho in zip("ABCDEF", (8, 45, 30, 18, 20, 12)):
+    for columna, ancho in zip("ABCDEF", (8, 45, 30, 18, 20, 12), strict=True):
         hoja.column_dimensions[columna].width = ancho
     archivo = BytesIO()
     libro_excel.save(archivo)

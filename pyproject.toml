@@ -2,3 +2,16 @@
 DJANGO_SETTINGS_MODULE = "config.settings"
 pythonpath = ["src", "."]
 testpaths = ["tests", "biblioteca/tests"]
+
+[tool.ruff]
+line-length = 140
+extend-exclude = ["biblioteca/migrations"]
+src = ["src", "."]
+
+[tool.ruff.lint]
+# E/F: errores de Python · I: orden de las importaciones · B: errores comunes
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]  # las líneas largas no detienen el CI
+
+[tool.ruff.lint.isort]
+known-first-party = ["bibliotrack", "biblioteca", "config"]

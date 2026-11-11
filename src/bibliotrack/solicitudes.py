@@ -2,7 +2,6 @@
 
 from bibliotrack.prestamos import MAXIMO_PRESTAMOS_ACTIVOS
 
-
 MENSAJE_YA_SOLICITADOS = "Los ejemplares disponibles ya están solicitados."
 MENSAJE_GUARDADOS = "Los ejemplares disponibles están guardados para una reserva."
 

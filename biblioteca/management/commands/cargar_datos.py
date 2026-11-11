@@ -1,12 +1,19 @@
 """Carga datos de prueba (T-02): 20 libros y 5 usuarios.
 
 Uso: py manage.py cargar_datos
+     py manage.py cargar_datos --demo    (además crea préstamos, una reserva, una multa y una solicitud)
 """
 
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
-from biblioteca.models import Libro, Perfil
+from biblioteca.models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
+from bibliotrack.multas import dias_de_multa, valor_de_la_multa
+from bibliotrack.prestamos import fecha_de_devolucion
 
 CONTRASENA_DE_PRUEBA = "Biblio2026"
 
@@ -46,6 +53,10 @@ USUARIOS = [
 class Command(BaseCommand):
     help = "Carga 20 libros y 5 usuarios de prueba."
 
+    def add_arguments(self, parser):
+        parser.add_argument("--demo", action="store_true",
+                            help="Crea también actividad de ejemplo: préstamos, un vencido, una multa, una reserva y una solicitud.")
+
     def handle(self, *args, **options):
         Usuario = get_user_model()
         libros = 0
@@ -71,4 +82,56 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"Listo: {libros} libros y {usuarios} usuarios nuevos. "
             f"Todos los usuarios de prueba usan la contraseña {CONTRASENA_DE_PRUEBA}."
+        ))
+        if options["demo"]:
+            self.cargar_actividad()
+
+    def cargar_actividad(self):
+        """Actividad de ejemplo para ver todas las páginas con datos. Solo se carga si no hay préstamos."""
+        if Prestamo.objects.exists():
+            self.stdout.write("Ya hay préstamos registrados: no se cargó la actividad de ejemplo.")
+            return
+        hoy = timezone.localdate()
+        ana, carlos, laura = (Perfil.objects.get(documento=d) for d in ("1001", "1002", "1003"))
+        libro = {titulo: Libro.objects.get(titulo=titulo) for titulo, *_ in LIBROS}
+
+        def devuelto(lector, titulo, hace, tardo=10):
+            """Préstamo de hace `hace` días, devuelto a los `tardo` días."""
+            inicio = hoy - timedelta(days=hace)
+            return Prestamo.objects.create(
+                lector=lector, libro=libro[titulo], fecha_prestamo=inicio, fecha_devolucion=fecha_de_devolucion(inicio),
+                fecha_entrega=inicio + timedelta(days=tardo), estado=Prestamo.DEVUELTO,
+            )
+
+        def activo(lector, titulo, vence_en):
+            """Préstamo activo que vence dentro de `vence_en` días (negativo: vencido). Descuenta el ejemplar."""
+            vence = hoy + timedelta(days=vence_en)
+            Libro.objects.filter(pk=libro[titulo].pk).update(disponibles=libro[titulo].disponibles - 1)
+            libro[titulo].refresh_from_db()
+            return Prestamo.objects.create(lector=lector, libro=libro[titulo], fecha_prestamo=vence - timedelta(days=15), fecha_devolucion=vence)
+
+        # Historial para el reporte de los más prestados
+        for lector, titulo, hace in [
+            (ana, "Cien años de soledad", 50), (carlos, "Cien años de soledad", 34), (laura, "Cien años de soledad", 18),
+            (ana, "Clean Code", 45), (carlos, "Clean Code", 22), (laura, "Sapiens", 40), (ana, "Sapiens", 20),
+            (carlos, "Álgebra de Baldor", 30), (laura, "Django para principiantes", 25), (ana, "Cosmos", 28),
+        ]:
+            devuelto(lector, titulo, hace)
+        # Laura devolvió tarde: multa pendiente
+        tarde = devuelto(laura, "María", hace=24, tardo=20)
+        dias = dias_de_multa(tarde.fecha_devolucion, tarde.fecha_entrega)
+        if dias:
+            Multa.objects.create(prestamo=tarde, lector=laura, dias=dias, creada=tarde.fecha_entrega,
+                                 valor=valor_de_la_multa(dias, settings.MULTA_POR_DIA))
+        # Préstamos activos: uno al día, uno por vencer y uno vencido
+        activo(ana, "Aprende Python en un fin de semana", vence_en=9)
+        activo(ana, "Breve historia del tiempo", vence_en=2)
+        activo(carlos, "La vorágine", vence_en=-4)
+        # «Delirio» tiene 1 ejemplar: lo tiene Carlos y Ana lo reservó
+        activo(carlos, "Delirio", vence_en=6)
+        Reserva.objects.create(lector=ana, libro=libro["Delirio"])
+        # Una solicitud pendiente para la bibliotecaria
+        Solicitud.objects.create(lector=carlos, libro=libro["Scrum: el arte de hacer el doble de trabajo"])
+        self.stdout.write(self.style.SUCCESS(
+            "Actividad de ejemplo: 11 préstamos devueltos, 4 activos (1 vencido), 1 multa, 1 reserva y 1 solicitud."
         ))

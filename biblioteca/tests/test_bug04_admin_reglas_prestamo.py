@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
-from biblioteca.models import Libro, Prestamo, Solicitud
+from biblioteca.models import Prestamo, Solicitud
 
 
 @pytest.fixture

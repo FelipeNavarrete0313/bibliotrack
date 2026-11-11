@@ -3,7 +3,11 @@ from datetime import datetime
 import pytest
 
 from bibliotrack.reservas import (
-    ReservaNoPermitida, ejemplares_libres, guardar_hasta, reservas_por_guardar, validar_reserva,
+    ReservaNoPermitida,
+    ejemplares_libres,
+    guardar_hasta,
+    reservas_por_guardar,
+    validar_reserva,
 )
 
 AGOTADO = {"id": 7, "disponibles": 0}

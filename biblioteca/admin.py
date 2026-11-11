@@ -11,7 +11,7 @@ las páginas, para que la disponibilidad de los libros siempre cuadre.
 from django import forms
 from django.contrib import admin, messages
 
-from bibliotrack.prestamos import PrestamoNoPermitido
+from bibliotrack.prestamos import MAXIMO_PRESTAMOS_ACTIVOS, PrestamoNoPermitido
 
 from . import servicios
 from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
@@ -82,8 +82,8 @@ class SolicitudAdminForm(forms.ModelForm):
                 raise forms.ValidationError("No se puede entregar: el libro fue dado de baja.")
             if libro and libro.disponibles <= 0:
                 raise forms.ValidationError("No se puede entregar: No hay ejemplares disponibles.")
-            if lector and lector.prestamos_activos >= 3:
-                raise forms.ValidationError("No se puede entregar: El lector ya tiene 3 préstamos activos.")
+            if lector and lector.prestamos_activos >= MAXIMO_PRESTAMOS_ACTIVOS:
+                raise forms.ValidationError(f"No se puede entregar: El lector ya tiene {MAXIMO_PRESTAMOS_ACTIVOS} préstamos activos.")
         return datos
 
 
@@ -169,8 +169,8 @@ class NuevoPrestamoAdminForm(forms.ModelForm):
             raise forms.ValidationError("El libro fue dado de baja.")
         if libro and libro.disponibles <= 0:
             raise forms.ValidationError("No hay ejemplares disponibles.")
-        if lector and lector.prestamos_activos >= 3:
-            raise forms.ValidationError("El lector ya tiene 3 préstamos activos.")
+        if lector and lector.prestamos_activos >= MAXIMO_PRESTAMOS_ACTIVOS:
+            raise forms.ValidationError(f"El lector ya tiene {MAXIMO_PRESTAMOS_ACTIVOS} préstamos activos.")
         return datos
 
 
