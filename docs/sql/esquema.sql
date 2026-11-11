@@ -30,3 +30,15 @@ CREATE TABLE "biblioteca_solicitud" ("id" integer NOT NULL PRIMARY KEY AUTOINCRE
 CREATE INDEX "biblioteca_solicitud_lector_id_2a1a6344" ON "biblioteca_solicitud" ("lector_id");
 CREATE INDEX "biblioteca_solicitud_libro_id_b990b808" ON "biblioteca_solicitud" ("libro_id");
 COMMIT;
+
+-- HU-13 · migración 0004 (py manage.py sqlmigrate biblioteca 0004)
+BEGIN;
+--
+-- Add field guardada_hasta to reserva
+--
+ALTER TABLE "biblioteca_reserva" ADD COLUMN "guardada_hasta" datetime NULL;
+--
+-- Alter field estado on reserva
+--
+-- (no-op)
+COMMIT;

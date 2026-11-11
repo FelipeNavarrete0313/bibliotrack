@@ -69,13 +69,13 @@ Abre **http://127.0.0.1:8000** en el navegador. Para detener el servidor, presio
 | Página | Dirección | Quién la ve | Historia |
 | --- | --- | --- | --- |
 | Catálogo con buscador | `/` | Todos | HU-06, T-07 |
-| Detalle de un libro (y «Solicitar préstamo» para lectores) | `/libros/<id>/` | Todos | HU-07, HU-17 |
+| Detalle de un libro (con «Solicitar préstamo» o «Reservar» para lectores) | `/libros/<id>/` | Todos | HU-07, HU-13, HU-17 |
 | Iniciar sesión | `/iniciar-sesion/` | Visitantes | HU-02 |
 | Crear una cuenta | `/registro/` | Visitantes | HU-01 |
 | Mi inicio | `/inicio/` | Con sesión | HU-02 |
 | Registrar un libro | `/libros/nuevo/` | Bibliotecario y administrador | HU-05 |
-| Mis préstamos: solicitudes, préstamos activos (con «Renovar») e historial | `/mis-prestamos/` | Lectores | HU-11, HU-12, HU-17 |
-| Préstamos: solicitudes pendientes, préstamos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-17 |
+| Mis préstamos: solicitudes, reservas, préstamos activos (con «Renovar») e historial | `/mis-prestamos/` | Lectores | HU-11, HU-12, HU-13, HU-17 |
+| Préstamos: solicitudes pendientes, reservas listas, préstamos y devoluciones | `/prestamos/` | Bibliotecario y administrador | HU-09, HU-10, HU-13, HU-17 |
 
 Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las páginas de BiblioTrack.
 
@@ -89,6 +89,13 @@ Ninguna pantalla enlaza al panel Admin de Django: todo se hace desde las página
 La bibliotecaria también puede prestar directamente, sin solicitud, con el documento del lector.
 
 Si dos personas atienden la misma solicitud o el mismo préstamo al mismo tiempo (por ejemplo, con un doble clic), solo cuenta la primera; la segunda ve un aviso (BUG-05).
+
+### Cómo se reserva un libro agotado
+
+1. Si un libro no tiene ejemplares libres, el **lector** pulsa **«Reservar»** en su página y entra a una cola por orden de llegada (HU-13). Puede tener máximo 2 reservas activas.
+2. Cuando alguien devuelve un ejemplar, se **guarda 48 horas** para la primera reserva de la cola. Nadie más puede solicitarlo ni recibirlo en ese tiempo.
+3. El lector lo ve como **«Lista para recoger»** en Mis préstamos. La **bibliotecaria** lo ve en «Reservas listas para entregar» y pulsa **«Entregar»**.
+4. Si pasan las 48 horas, la reserva queda «Vencida» y el ejemplar pasa a la siguiente reserva o vuelve al catálogo.
 
 ### Panel interno de Django (opcional)
 
@@ -123,7 +130,7 @@ py -m pytest -v
 manage.py          punto de entrada de Django
 config/            configuración de Django
 biblioteca/        app de Django: modelos, vistas, plantillas, datos de prueba y sus pruebas
-src/bibliotrack/   reglas del negocio (búsqueda y préstamos), sin Django
+src/bibliotrack/   reglas del negocio (búsqueda, préstamos, renovaciones y reservas), sin Django
 tests/             pruebas de las reglas del negocio
 docs/              backlog, Scrum y sprints
 .github/           plantillas de issues y PR, y el workflow de CI
