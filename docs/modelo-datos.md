@@ -55,7 +55,8 @@ erDiagram
         int lector_id FK
         int libro_id FK
         datetime creada
-        string estado "activa, atendida o cancelada"
+        string estado "activa, atendida, cancelada o vencida"
+        datetime guardada_hasta "48 horas desde que se devuelve un ejemplar"
     }
     SOLICITUD {
         int id PK
@@ -79,6 +80,7 @@ erDiagram
 | Un libro dado de baja no se borra (`activo = false`) | HU-08 pide conservar su historial de préstamos. |
 | El préstamo guarda `fecha_devolucion` y `fecha_entrega` por separado | HU-10 necesita calcular los días de retraso. |
 | La `Solicitud` (HU-17) es una tabla aparte y no descuenta ejemplares | El lector pide el libro en línea, pero el ejemplar solo sale al entregarlo; ahí se crea el `Prestamo` con las reglas de HU-09. Se agregó en la migración `0002_solicitud`. |
+| La `Reserva` guarda `guardada_hasta` y no descuenta ejemplares (HU-13) | El ejemplar devuelto sigue contando como disponible, pero se aparta 48 horas para la primera reserva de la cola. El vencimiento se revisa al consultar las reservas, sin tarea programada |
 
 ## Script SQL
 
@@ -87,6 +89,7 @@ Django crea las tablas con migraciones (`biblioteca/migrations/`). El SQL equiva
 ```bash
 py manage.py sqlmigrate biblioteca 0001
 py manage.py sqlmigrate biblioteca 0002
+py manage.py sqlmigrate biblioteca 0004
 ```
 
 ## Datos de prueba

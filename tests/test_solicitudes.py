@@ -44,3 +44,9 @@ def test_no_se_solicita_si_los_ejemplares_ya_estan_solicitados():
 
 def test_se_solicita_si_queda_un_ejemplar_sin_solicitar():
     validar_solicitud(lector(), {"id": 7, "disponibles": 2, "solicitudes_pendientes": 1})
+
+
+def test_no_se_solicita_un_ejemplar_guardado_para_la_reserva_de_otro():
+    # HU-13: el único ejemplar disponible está guardado 48 horas para otro lector.
+    with pytest.raises(SolicitudNoPermitida, match="guardados para una reserva"):
+        validar_solicitud(lector(), {"id": 7, "disponibles": 1, "guardados_para_otros": 1})

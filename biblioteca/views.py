@@ -12,11 +12,12 @@ from bibliotrack.alertas import POR_VENCER, VENCIDO, estado_del_prestamo
 from bibliotrack.catalogo import buscar
 from bibliotrack.prestamos import PrestamoNoPermitido
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
+from bibliotrack.reservas import ReservaNoPermitida
 from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
 from .forms import EditarLibroForm, InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
-from .models import Libro, Perfil, Prestamo, Solicitud
+from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
 from .permisos import solo_personal
 
 MENSAJE_CREDENCIALES = "Correo o contraseña incorrectos."
@@ -45,19 +46,25 @@ def catalogo(request):
 def detalle_libro(request, pk):
     """HU-07: detalle y disponibilidad de un libro."""
     libro = get_object_or_404(Libro, pk=pk, activo=True)
+    servicios.actualizar_reservas(libro)  # HU-13: vence las reservas guardadas hace más de 48 horas
     proxima = None
     if libro.disponibles == 0:
         proxima = libro.prestamos.filter(estado=Prestamo.ACTIVO).order_by("fecha_devolucion").first()
     en_espera = libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
     perfil = getattr(request.user, "perfil", None)
-    solicitud = None
+    solicitud = reserva = None
     prestado = False
-    if perfil and perfil.rol == Perfil.LECTOR:
+    es_lector = bool(perfil and perfil.rol == Perfil.LECTOR)
+    if es_lector:
         solicitud = perfil.solicitudes.filter(libro=libro, estado=Solicitud.PENDIENTE).first()
         prestado = perfil.prestamos.filter(libro=libro, estado=Prestamo.ACTIVO).exists()
+        reserva = perfil.reservas.filter(libro=libro, estado=Reserva.ACTIVA).first()
+    # Ejemplares que este usuario no puede pedir: solicitados (BUG-07) o guardados para otra reserva (HU-13).
+    ocupados = servicios.ejemplares_ocupados(libro, perfil if es_lector else None)
     return render(request, "biblioteca/detalle_libro.html", {
         "libro": libro, "proxima": proxima, "solicitud": solicitud, "prestado": prestado,
-        "en_espera": en_espera, "hay_ejemplar_libre": libro.disponibles > en_espera,  # BUG-07
+        "en_espera": en_espera, "hay_ejemplar_libre": libro.disponibles > ocupados,
+        "reserva": reserva, "en_cola": libro.reservas.filter(estado=Reserva.ACTIVA).count(),
     })
 
 
@@ -128,7 +135,11 @@ def prestamos(request):
     if buscar_prestamo:
         activos = activos.filter(Q(lector__documento=buscar_prestamo) | Q(libro__isbn=buscar_prestamo))
     pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).select_related("lector__usuario", "libro")
+    servicios.actualizar_reservas()
+    reservas_listas = Reserva.objects.filter(estado=Reserva.ACTIVA, guardada_hasta__isnull=False).select_related(
+        "lector__usuario", "libro").order_by("guardada_hasta")
     return render(request, "biblioteca/prestamos.html", {
+        "reservas_listas": reservas_listas,
         "form": form, "activos": activos, "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
         "pendientes": pendientes,
     })
@@ -209,6 +220,7 @@ def mis_prestamos(request):
     perfil = getattr(request.user, "perfil", None)
     if perfil is None:
         return render(request, "biblioteca/mis_prestamos.html", {"sin_perfil": True})
+    servicios.actualizar_reservas()
     hoy = timezone.localdate()
     activos = []
     for prestamo in perfil.prestamos.filter(estado=Prestamo.ACTIVO).select_related("libro"):
@@ -237,6 +249,7 @@ def mis_prestamos(request):
     solicitudes = perfil.solicitudes.select_related("libro").order_by("-creada")[:10]
     return render(request, "biblioteca/mis_prestamos.html", {
         "activos": activos, "historial": historial, "solicitudes": solicitudes,
+        "reservas": perfil.reservas.filter(estado=Reserva.ACTIVA).select_related("libro").order_by("creada"),
     })
 
 
@@ -253,6 +266,58 @@ def renovar_prestamo(request, pk):
     else:
         messages.success(request, f"Renovaste «{prestamo.libro.titulo}». Nueva fecha de devolución: {nueva:%d/%m/%Y}.")
     return redirect("mis_prestamos")
+
+
+@login_required
+@require_POST
+def reservar_libro(request, pk):
+    """HU-13: el lector reserva un libro que no tiene ejemplares libres."""
+    perfil = perfil_de_lector(request)
+    libro = get_object_or_404(Libro, pk=pk, activo=True)
+    try:
+        reserva = servicios.crear_reserva(perfil, libro)
+    except ReservaNoPermitida as error:
+        messages.error(request, f"{error}.")
+    else:
+        messages.success(
+            request,
+            f"Reservaste «{libro.titulo}»: quedaste en el puesto {reserva.puesto} de la cola. "
+            "Cuando devuelvan un ejemplar, se guardará 48 horas para ti.",
+        )
+    return redirect("detalle_libro", pk=libro.pk)
+
+
+@login_required
+@require_POST
+def cancelar_reserva(request, pk):
+    """HU-13: el lector cancela una reserva suya que sigue activa."""
+    perfil = perfil_de_lector(request)
+    reserva = get_object_or_404(Reserva.objects.select_related("libro"), pk=pk, lector=perfil, estado=Reserva.ACTIVA)
+    try:
+        servicios.cancelar_reserva(reserva)
+    except ReservaNoPermitida as error:
+        messages.error(request, f"{error}.")
+    else:
+        messages.info(request, f"Cancelaste la reserva de «{reserva.libro.titulo}».")
+    return redirect("mis_prestamos")
+
+
+@solo_personal
+@require_POST
+def entregar_reserva(request, pk):
+    """HU-13: el lector recoge el ejemplar guardado; se crea el préstamo con las reglas de HU-09."""
+    reserva = get_object_or_404(Reserva.objects.select_related("libro", "lector__usuario"), pk=pk, estado=Reserva.ACTIVA)
+    try:
+        prestamo = servicios.entregar_reserva(reserva)
+    except PrestamoNoPermitido as error:
+        messages.error(request, f"No se pudo entregar «{reserva.libro.titulo}»: {error}.")
+    else:
+        messages.success(
+            request,
+            f"Entregado: «{reserva.libro.titulo}» a {reserva.lector.nombre}. "
+            f"Debe devolverlo el {prestamo.fecha_devolucion:%d/%m/%Y}.",
+        )
+    return redirect("prestamos")
 
 
 def perfil_de_lector(request):
@@ -273,6 +338,9 @@ def solicitar_prestamo(request, pk):
     # La revisión y la creación van en una transacción: dos lectores no toman el mismo ejemplar (BUG-07).
     with transaction.atomic():
         libro = get_object_or_404(Libro, pk=pk, activo=True)
+        servicios.actualizar_reservas(libro)
+        ocupados = servicios.ejemplares_ocupados(libro, perfil)
+        guardados = servicios.guardados_para_otros(libro, perfil)
         try:
             validar_solicitud(
                 {
@@ -283,7 +351,8 @@ def solicitar_prestamo(request, pk):
                 },
                 {
                     "id": libro.pk, "disponibles": libro.disponibles,
-                    "solicitudes_pendientes": libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count(),
+                    "solicitudes_pendientes": ocupados - guardados,
+                    "guardados_para_otros": guardados,
                 },
             )
         except SolicitudNoPermitida as error:

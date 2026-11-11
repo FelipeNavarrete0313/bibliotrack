@@ -28,6 +28,24 @@
   {% endif %}
 </section>
 
+{% if reservas_listas %}
+<section class="solicitudes">
+  <h2>Reservas listas para entregar ({{ reservas_listas|length }})</h2>
+  <table>
+    <tr><th>Libro</th><th>Lector</th><th>Guardada hasta</th><th></th></tr>
+    {% for r in reservas_listas %}
+    <tr>
+      <td>{{ r.libro.titulo }}<br><span class="ayuda">ISBN {{ r.libro.isbn }}</span></td>
+      <td>{{ r.lector.nombre }}<br><span class="ayuda">Doc. {{ r.lector.documento }}</span></td>
+      <td>{{ r.guardada_hasta|date:"d/m/Y H:i" }}</td>
+      <td><form method="post" action="{% url 'entregar_reserva' r.pk %}">{% csrf_token %}<button type="submit" aria-label="Entregar {{ r.libro.titulo }} a {{ r.lector.nombre }}">Entregar</button></form></td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="ayuda">El ejemplar está guardado 48 horas para ese lector. Si no lo recoge, pasa a la siguiente reserva o vuelve al catálogo.</p>
+</section>
+{% endif %}
+
 <div class="dos-columnas">
   <form class="tarjeta" method="post" action="{% url 'prestamos' %}">
     {% csrf_token %}
