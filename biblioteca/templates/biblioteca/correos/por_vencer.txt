@@ -1,0 +1,11 @@
+Hola, {{ nombre }}:
+
+Tu préstamo de «{{ libro.titulo }}» vence el {{ prestamo.fecha_devolucion|date:"d/m/Y" }}.
+
+Devuelve el libro en el mostrador de la biblioteca antes de esa fecha.{% if puede_renovar %}
+Si necesitas más tiempo, puedes renovarlo una vez, por 7 días, aquí:{% else %}
+Este préstamo ya se renovó una vez, así que no se puede renovar de nuevo. Puedes verlo aquí:{% endif %}
+
+{{ enlace }}
+
+Biblioteca · BiblioTrack

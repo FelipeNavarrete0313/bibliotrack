@@ -5,6 +5,15 @@
 {% if sin_perfil %}
 <p class="vacio">Tu cuenta no tiene un perfil de lector en BiblioTrack, así que no tiene préstamos.</p>
 {% else %}
+{% if multas %}
+<div class="tarjeta aviso-multa" role="alert">
+  <h2 style="margin-top:0">Tienes {{ multas|length }} multa{{ multas|length|pluralize }} pendiente{{ multas|length|pluralize }}</h2>
+  <ul>
+    {% for m in multas %}<li><b>{{ m.en_pesos }}</b> por «{{ m.prestamo.libro.titulo }}», devuelto el {{ m.creada|date:"d/m/Y" }} con {{ m.dias }} día{{ m.dias|pluralize }} de retraso.</li>{% endfor %}
+  </ul>
+  <p class="ayuda">Págala en el mostrador de la biblioteca. Mientras esté pendiente no puedes pedir nuevos préstamos.</p>
+</div>
+{% endif %}
 <h2>Mis solicitudes</h2>
 {% if solicitudes %}
 <table>

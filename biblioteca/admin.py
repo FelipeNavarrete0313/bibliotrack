@@ -14,9 +14,9 @@ from django.contrib import admin, messages
 from bibliotrack.prestamos import PrestamoNoPermitido
 
 from . import servicios
-from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
+from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
 
-admin.site.register([Perfil, Reserva])
+admin.site.register([Perfil, Reserva, Multa])
 
 
 class LibroAdminForm(forms.ModelForm):
@@ -140,7 +140,7 @@ class SolicitudAdmin(admin.ModelAdmin):
 class PrestamoAdminForm(forms.ModelForm):
     class Meta:
         model = Prestamo
-        fields = ["lector", "libro", "fecha_prestamo", "fecha_devolucion", "renovado", "estado"]
+        fields = ["lector", "libro", "fecha_prestamo", "fecha_devolucion", "renovado", "estado"]  # los avisos no se editan
 
     def clean(self):
         datos = super().clean()

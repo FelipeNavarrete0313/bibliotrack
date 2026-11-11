@@ -78,3 +78,5 @@ tr.fila-por-vencer td { background: #fdf3d7; }
 .estado-cancelada { color: var(--texto-suave); }
 
 .paginas { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
+
+.aviso-multa { border-left: 6px solid #b42318; }

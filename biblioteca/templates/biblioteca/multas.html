@@ -1,0 +1,33 @@
+{% extends "biblioteca/base.html" %}
+{% block titulo %}Multas{% endblock %}
+{% block contenido %}
+<h1>Multas pendientes</h1>
+<form class="buscador" method="get" action="{% url 'multas' %}" role="search">
+  <input type="search" name="documento" value="{{ documento }}" placeholder="Documento del lector" aria-label="Buscar multas por documento del lector">
+  <button type="submit">Buscar</button>
+  {% if documento %}<a class="boton boton-secundario" href="{% url 'multas' %}">Ver todas</a>{% endif %}
+</form>
+{% if pagina.object_list %}
+<table>
+  <thead><tr><th scope="col">Lector</th><th scope="col">Libro</th><th scope="col">Devuelto el</th><th scope="col">Días cobrados</th><th scope="col">Valor</th><th scope="col"></th></tr></thead>
+  <tbody>
+  {% for m in pagina %}
+  <tr>
+    <td>{{ m.lector.nombre }}<br><span class="ayuda">Doc. {{ m.lector.documento }}</span></td>
+    <td>{{ m.prestamo.libro.titulo }}<br><span class="ayuda">Debía devolverse el {{ m.prestamo.fecha_devolucion|date:"d/m/Y" }}</span></td>
+    <td>{{ m.creada|date:"d/m/Y" }}</td>
+    <td>{{ m.dias }}</td>
+    <td><b>{{ m.en_pesos }}</b></td>
+    <td><form method="post" action="{% url 'pagar_multa' m.pk %}">{% csrf_token %}<button type="submit" aria-label="Registrar el pago de {{ m.en_pesos }} de {{ m.lector.nombre }}">Registrar pago</button></form></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "biblioteca/_paginas.html" %}
+{% elif documento %}
+<p class="vacio">El lector con documento «{{ documento }}» no tiene multas pendientes.</p>
+{% else %}
+<p class="vacio">No hay multas pendientes.</p>
+{% endif %}
+<p class="ayuda">La multa es de {{ valor_por_dia }} por cada día de retraso, sin contar domingos ni festivos. Un lector con multas pendientes no puede pedir nuevos préstamos.</p>
+{% endblock %}

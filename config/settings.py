@@ -91,6 +91,9 @@ DEFAULT_FROM_EMAIL = os.environ.get("BIBLIOTRACK_EMAIL_FROM", "BiblioTrack <bibl
 # Dirección pública de la aplicación, para los enlaces de los correos.
 SITIO_URL = os.environ.get("BIBLIOTRACK_URL", "http://127.0.0.1:8000")
 
+# HU-16: valor de la multa por cada día de retraso, en pesos.
+MULTA_POR_DIA = int(os.environ.get("BIBLIOTRACK_MULTA_POR_DIA", "1000"))
+
 # HU-03: el enlace para recuperar la contraseña vence a los 30 minutos.
 PASSWORD_RESET_TIMEOUT = 30 * 60
 

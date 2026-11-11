@@ -1,0 +1,11 @@
+Hola, {{ nombre }}:
+
+Ya hay un ejemplar de «{{ libro.titulo }}» para ti.
+
+Lo guardamos hasta el {{ reserva.guardada_hasta|date:"d/m/Y" }} a las {{ reserva.guardada_hasta|date:"H:i" }}. Recógelo en el mostrador de la biblioteca o solicítalo en línea antes de esa hora; después pasa a la siguiente persona de la cola.
+
+Puedes ver tu reserva aquí:
+
+{{ enlace }}
+
+Biblioteca · BiblioTrack

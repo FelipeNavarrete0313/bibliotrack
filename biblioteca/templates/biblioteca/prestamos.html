@@ -15,8 +15,8 @@
       <td>{{ s.libro.disponibles }} de {{ s.libro.total_ejemplares }}</td>
       <td>
         <div class="acciones">
-        <form method="post" action="{% url 'entregar_solicitud' s.pk %}">{% csrf_token %}<button type="submit">Entregar</button></form>
-        <form method="post" action="{% url 'rechazar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario">Rechazar</button></form>
+        <form method="post" action="{% url 'entregar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" aria-label="Entregar {{ s.libro.titulo }} a {{ s.lector.nombre }}">Entregar</button></form>
+        <form method="post" action="{% url 'rechazar_solicitud' s.pk %}">{% csrf_token %}<button type="submit" class="boton-secundario" aria-label="Rechazar la solicitud de {{ s.libro.titulo }} de {{ s.lector.nombre }}">Rechazar</button></form>
         </div>
       </td>
     </tr>
@@ -65,7 +65,8 @@
     <form class="buscador-pequeno" method="get" action="{% url 'prestamos' %}">
       <input type="search" name="buscar" value="{{ buscar_prestamo }}" placeholder="Documento del lector o ISBN" aria-label="Buscar préstamo por documento o ISBN">
       <button type="submit">Buscar</button>
-      {% if buscar_prestamo %}<a class="boton boton-secundario" href="{% url 'prestamos' %}">Ver todos</a>{% endif %}
+      {% if buscar_prestamo or solo_vencidos %}<a class="boton boton-secundario" href="{% url 'prestamos' %}">Ver todos</a>{% endif %}
+      {% if total_vencidos and not solo_vencidos %}<a class="boton boton-secundario" href="{% url 'prestamos' %}?vencidos=1">Solo vencidos ({{ total_vencidos }})</a>{% endif %}
     </form>
     {% if activos %}
     <table>
@@ -78,12 +79,15 @@
         <td>
           <form method="post" action="{% url 'registrar_devolucion' p.pk %}">
             {% csrf_token %}
-            <button type="submit">Registrar devolución</button>
+            <button type="submit" aria-label="Registrar la devolución de {{ p.libro.titulo }} de {{ p.lector.nombre }}">Registrar devolución</button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </table>
+    {% include "biblioteca/_paginas.html" with pagina=activos consulta=consulta_paginas %}
+    {% elif solo_vencidos %}
+    <p class="vacio">No hay préstamos vencidos.</p>
     {% elif buscar_prestamo %}
     <p class="vacio">No hay préstamos activos con el documento o ISBN «{{ buscar_prestamo }}».</p>
     {% else %}

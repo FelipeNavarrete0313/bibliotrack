@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth import views as vistas_auth
@@ -8,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -22,7 +23,7 @@ from bibliotrack.solicitudes import SolicitudNoPermitida, validar_solicitud
 
 from . import seguridad, servicios
 from .forms import InicioSesionForm, LibroForm, PrestamoForm, RegistroForm
-from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
+from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
 from .permisos import solo_administrador, solo_personal
 
 POR_PAGINA = 20
@@ -41,7 +42,8 @@ def catalogo(request):
     resultados = buscar([libro.como_dict() for libro in activos], texto, categoria or None)
     categorias = activos.order_by("categoria").values_list("categoria", flat=True).distinct()
     return render(request, "biblioteca/catalogo.html", {
-        "resultados": resultados,
+        "resultados": pagina_de(request, resultados),
+        "consulta": urlencode({"q": texto, "categoria": categoria}) + "&" if texto or categoria else "",
         "texto": texto,
         "categoria": categoria,
         "categorias": categorias,
@@ -109,13 +111,20 @@ def prestamos(request):
     activos = Prestamo.objects.filter(estado=Prestamo.ACTIVO).select_related("lector__usuario", "libro")
     if buscar_prestamo:
         activos = activos.filter(Q(lector__documento=buscar_prestamo) | Q(libro__isbn=buscar_prestamo))
+    solo_vencidos = request.GET.get("vencidos") == "1"
+    vencidos = activos.filter(fecha_devolucion__lt=timezone.localdate())
+    total_vencidos = vencidos.count()
+    if solo_vencidos:
+        activos = vencidos
     pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).select_related("lector__usuario", "libro")
     servicios.actualizar_reservas()
     reservas_listas = Reserva.objects.filter(estado=Reserva.ACTIVA, guardada_hasta__isnull=False).select_related(
         "lector__usuario", "libro").order_by("guardada_hasta")
     return render(request, "biblioteca/prestamos.html", {
         "reservas_listas": reservas_listas,
-        "form": form, "activos": activos, "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+        "form": form, "activos": pagina_de(request, activos), "buscar_prestamo": buscar_prestamo, "hoy": timezone.localdate(),
+        "solo_vencidos": solo_vencidos, "total_vencidos": total_vencidos,
+        "consulta_paginas": "".join(f"{k}={val}&" for k, val in (("buscar", buscar_prestamo), ("vencidos", "1" if solo_vencidos else "")) if val),
         "pendientes": pendientes,
     })
 
@@ -133,7 +142,9 @@ def registrar_devolucion(request, pk):
         return redirect("prestamos")
     texto = f"Devolución registrada: «{libro.titulo}» de {prestamo.lector.nombre}."
     if retraso:
-        messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.")
+        multa = Multa.objects.filter(prestamo=prestamo).first()
+        cobro = f" Multa: {multa.en_pesos} por {multa.dias} día(s) hábil(es)." if multa else " No genera multa: los días de retraso fueron domingo o festivo."
+        messages.warning(request, f"{texto} Se entregó con {retraso} día(s) de retraso.{cobro}")
     else:
         messages.success(request, f"{texto} Se entregó a tiempo.")
     return redirect("prestamos")
@@ -222,8 +233,16 @@ def cerrar_sesion(request):
 def inicio(request):
     """HU-02: página de inicio según el rol del usuario."""
     perfil = getattr(request.user, "perfil", None)
-    pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).count() if perfil and perfil.es_personal else 0
-    return render(request, "biblioteca/inicio.html", {"perfil": perfil, "pendientes": pendientes})
+    pendientes, resumen = 0, None
+    if perfil and perfil.es_personal:
+        servicios.actualizar_reservas()
+        pendientes = Solicitud.objects.filter(estado=Solicitud.PENDIENTE).count()
+        resumen = {
+            "reservas_listas": Reserva.objects.filter(estado=Reserva.ACTIVA, guardada_hasta__isnull=False).count(),
+            "vencidos": Prestamo.objects.filter(estado=Prestamo.ACTIVO, fecha_devolucion__lt=timezone.localdate()).count(),
+            "multas": Multa.objects.filter(estado=Multa.PENDIENTE).count(),
+        }
+    return render(request, "biblioteca/inicio.html", {"perfil": perfil, "pendientes": pendientes, "resumen": resumen})
 
 
 @login_required
@@ -262,6 +281,7 @@ def mis_prestamos(request):
     return render(request, "biblioteca/mis_prestamos.html", {
         "activos": activos, "historial": historial, "solicitudes": solicitudes,
         "reservas": perfil.reservas.filter(estado=Reserva.ACTIVA).select_related("libro").order_by("creada"),
+        "multas": perfil.multas_pendientes.select_related("prestamo__libro"),
     })
 
 
@@ -345,6 +365,9 @@ def perfil_de_lector(request):
 def solicitar_prestamo(request, pk):
     """HU-17: el lector solicita en línea el préstamo de un libro disponible."""
     perfil = perfil_de_lector(request)
+    if perfil.multas_pendientes.exists():  # HU-16
+        messages.error(request, "Tienes una multa pendiente. Págala en la biblioteca para pedir nuevos préstamos.")
+        return redirect("detalle_libro", pk=pk)
     activos = perfil.prestamos.filter(estado=Prestamo.ACTIVO)
     pendientes = perfil.solicitudes.filter(estado=Solicitud.PENDIENTE)
     # La revisión y la creación van en una transacción: dos lectores no toman el mismo ejemplar (BUG-07).
@@ -462,3 +485,31 @@ def cambiar_rol(request, pk):
         messages.success(request, f"{perfil.nombre} ahora es {perfil.get_rol_display().lower()}.")
     volver = request.POST.get("q", "")
     return redirect(f"{reverse('usuarios')}?q={volver}" if volver else "usuarios")
+
+
+@solo_personal
+def multas(request):
+    """HU-16: multas pendientes; el personal busca por documento y registra el pago."""
+    documento = request.GET.get("documento", "").strip()
+    pendientes = Multa.objects.filter(estado=Multa.PENDIENTE).select_related("lector__usuario", "prestamo__libro")
+    if documento:
+        pendientes = pendientes.filter(lector__documento=documento)
+    return render(request, "biblioteca/multas.html", {
+        "pagina": pagina_de(request, pendientes), "documento": documento,
+        "consulta": f"documento={documento}&" if documento else "",
+        "total": sum(m.valor for m in pendientes), "valor_por_dia": Multa(valor=settings.MULTA_POR_DIA).en_pesos,
+    })
+
+
+@solo_personal
+@require_POST
+def pagar_multa(request, pk):
+    """HU-16: registra el pago de una multa pendiente."""
+    multa = get_object_or_404(Multa.objects.select_related("lector__usuario", "prestamo__libro"), pk=pk)
+    try:
+        servicios.pagar_multa(multa)
+    except PrestamoNoPermitido as error:
+        messages.error(request, f"{error}.")
+    else:
+        messages.success(request, f"Pago registrado: {multa.en_pesos} de {multa.lector.nombre} por «{multa.prestamo.libro.titulo}».")
+    return redirect("multas")

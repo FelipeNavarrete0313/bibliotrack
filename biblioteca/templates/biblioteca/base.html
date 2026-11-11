@@ -21,6 +21,7 @@
         {% endif %}
         {% if perfil.es_personal %}
         <a href="{% url 'prestamos' %}" {% if pagina == 'prestamos' %}class="activo"{% endif %}>Préstamos</a>
+        <a href="{% url 'multas' %}" {% if pagina == 'multas' %}class="activo"{% endif %}>Multas</a>
         <a href="{% url 'registrar_libro' %}" {% if pagina == 'registrar_libro' %}class="activo"{% endif %}>Registrar libro</a>
         {% endif %}
         {% if perfil.rol == 'administrador' %}
@@ -42,7 +43,7 @@
   <main class="contenedor">
     {% if messages %}
       <ul class="mensajes">
-        {% for mensaje in messages %}<li class="{{ mensaje.tags }}">{{ mensaje }}</li>{% endfor %}
+        {% for mensaje in messages %}<li class="{{ mensaje.tags }}" role="{% if 'error' in mensaje.tags %}alert{% else %}status{% endif %}">{{ mensaje }}</li>{% endfor %}
       </ul>
     {% endif %}
     {% block contenido %}{% endblock %}

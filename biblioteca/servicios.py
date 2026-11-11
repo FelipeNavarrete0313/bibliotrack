@@ -4,16 +4,19 @@ Las páginas de BiblioTrack y el panel Admin usan estas mismas funciones, para q
 las reglas (HU-09, HU-10 y HU-17) se cumplan sin importar desde dónde se haga.
 """
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from bibliotrack.devoluciones import devolver_ejemplar, dias_de_retraso
+from bibliotrack.multas import dias_de_multa, valor_de_la_multa
 from bibliotrack.prestamos import PrestamoNoPermitido, registrar_prestamo
 from bibliotrack.renovaciones import RenovacionNoPermitida, renovar
 from bibliotrack.roles import validar_cambio_de_rol
 from bibliotrack.reservas import ReservaNoPermitida, ejemplares_libres, guardar_hasta, reservas_por_guardar, validar_reserva
 
-from .models import Libro, Perfil, Prestamo, Reserva, Solicitud
+from . import notificaciones
+from .models import Libro, Multa, Perfil, Prestamo, Reserva, Solicitud
 
 
 def crear_prestamo(lector, libro):
@@ -25,6 +28,8 @@ def crear_prestamo(lector, libro):
         libro = Libro.objects.select_for_update().get(pk=libro.pk)
         if not libro.activo:
             raise PrestamoNoPermitido("El libro fue dado de baja")
+        if lector.multas_pendientes.exists():  # HU-16
+            raise PrestamoNoPermitido("El lector tiene multas pendientes")
         # HU-13: un ejemplar guardado para la reserva de otro lector no se presta.
         actualizar_reservas(libro)
         if libro.disponibles > 0 and ejemplares_libres(libro.disponibles, guardados_para_otros(libro, lector)) == 0:
@@ -87,6 +92,11 @@ def registrar_devolucion(prestamo, hoy=None):
         )["disponibles"]
         libro.save(update_fields=["disponibles"])
         actualizar_reservas(libro)  # HU-13: el ejemplar devuelto se guarda para la primera reserva
+        # HU-16: la multa cuenta los días de retraso sin domingos ni festivos.
+        dias = dias_de_multa(prestamo.fecha_devolucion, hoy)
+        if dias:
+            Multa.objects.create(prestamo=prestamo, lector_id=prestamo.lector_id, dias=dias,
+                                 valor=valor_de_la_multa(dias, settings.MULTA_POR_DIA), creada=hoy)
     prestamo.estado, prestamo.fecha_entrega = Prestamo.DEVUELTO, hoy
     return dias_de_retraso(prestamo.fecha_devolucion, hoy)
 
@@ -111,7 +121,7 @@ def renovar_prestamo(prestamo, hoy=None):
             hoy, reservas_de_otros(actual),
         )
         cambiados = Prestamo.objects.filter(pk=actual.pk, estado=Prestamo.ACTIVO, renovado=False).update(
-            renovado=True, fecha_devolucion=nueva,
+            renovado=True, fecha_devolucion=nueva, aviso_por_vencer=None,  # HU-14: se avisa otra vez con la fecha nueva
         )
         if not cambiados:
             raise RenovacionNoPermitida("Este préstamo ya se renovó una vez")
@@ -136,6 +146,16 @@ def borrar_prestamo(prestamo):
             libro.save(update_fields=["disponibles"])
             actualizar_reservas(libro)
         prestamo.delete()
+
+
+# ---------------------------------------------------------------- Multas (HU-16)
+
+def pagar_multa(multa, hoy=None):
+    """HU-16: el bibliotecario registra el pago de una multa pendiente."""
+    hoy = hoy or timezone.localdate()
+    if not Multa.objects.filter(pk=multa.pk, estado=Multa.PENDIENTE).update(estado=Multa.PAGADA, pagada=hoy):
+        raise PrestamoNoPermitido("La multa ya estaba pagada")
+    multa.estado, multa.pagada = Multa.PAGADA, hoy
 
 
 # ---------------------------------------------------------------- Usuarios (HU-04)
@@ -200,6 +220,7 @@ def _guardar_ejemplares(libro, ahora):
     for reserva in reservas_por_guardar(cola, libro.disponibles, ejemplares_ocupados(libro)):
         reserva.guardada_hasta = guardar_hasta(ahora)
         reserva.save(update_fields=["guardada_hasta"])
+        notificaciones.avisar_reserva_lista(reserva)
 
 
 def crear_reserva(lector, libro):
