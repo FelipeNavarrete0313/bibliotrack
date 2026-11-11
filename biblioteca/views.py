@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -46,6 +47,7 @@ def detalle_libro(request, pk):
     proxima = None
     if libro.disponibles == 0:
         proxima = libro.prestamos.filter(estado=Prestamo.ACTIVO).order_by("fecha_devolucion").first()
+    en_espera = libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count()
     perfil = getattr(request.user, "perfil", None)
     solicitud = None
     prestado = False
@@ -54,6 +56,7 @@ def detalle_libro(request, pk):
         prestado = perfil.prestamos.filter(libro=libro, estado=Prestamo.ACTIVO).exists()
     return render(request, "biblioteca/detalle_libro.html", {
         "libro": libro, "proxima": proxima, "solicitud": solicitud, "prestado": prestado,
+        "en_espera": en_espera, "hay_ejemplar_libre": libro.disponibles > en_espera,  # BUG-07
     })
 
 
@@ -206,28 +209,33 @@ def perfil_de_lector(request):
 def solicitar_prestamo(request, pk):
     """HU-17: el lector solicita en línea el préstamo de un libro disponible."""
     perfil = perfil_de_lector(request)
-    libro = get_object_or_404(Libro, pk=pk, activo=True)
     activos = perfil.prestamos.filter(estado=Prestamo.ACTIVO)
     pendientes = perfil.solicitudes.filter(estado=Solicitud.PENDIENTE)
-    try:
-        validar_solicitud(
-            {
-                "prestamos_activos": activos.count(),
-                "solicitudes_pendientes": pendientes.count(),
-                "libros_prestados": set(activos.values_list("libro_id", flat=True)),
-                "libros_solicitados": set(pendientes.values_list("libro_id", flat=True)),
-            },
-            {"id": libro.pk, "disponibles": libro.disponibles},
-        )
-    except SolicitudNoPermitida as error:
-        messages.error(request, str(error))
-    else:
-        Solicitud.objects.create(lector=perfil, libro=libro)
-        messages.success(
-            request,
-            f"Solicitud enviada: «{libro.titulo}». Cuando la biblioteca la entregue, "
-            "el préstamo aparecerá en «Mis préstamos».",
-        )
+    # La revisión y la creación van en una transacción: dos lectores no toman el mismo ejemplar (BUG-07).
+    with transaction.atomic():
+        libro = get_object_or_404(Libro, pk=pk, activo=True)
+        try:
+            validar_solicitud(
+                {
+                    "prestamos_activos": activos.count(),
+                    "solicitudes_pendientes": pendientes.count(),
+                    "libros_prestados": set(activos.values_list("libro_id", flat=True)),
+                    "libros_solicitados": set(pendientes.values_list("libro_id", flat=True)),
+                },
+                {
+                    "id": libro.pk, "disponibles": libro.disponibles,
+                    "solicitudes_pendientes": libro.solicitudes.filter(estado=Solicitud.PENDIENTE).count(),
+                },
+            )
+        except SolicitudNoPermitida as error:
+            messages.error(request, str(error))
+        else:
+            Solicitud.objects.create(lector=perfil, libro=libro)
+            messages.success(
+                request,
+                f"Solicitud enviada: «{libro.titulo}». Cuando la biblioteca la entregue, "
+                "el préstamo aparecerá en «Mis préstamos».",
+            )
     return redirect("detalle_libro", pk=libro.pk)
 
 
